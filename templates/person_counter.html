@@ -1,0 +1,212 @@
+{% extends 'layout.html' %}
+
+
+<head>
+    <!-- JQuery links  -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+
+    <!--High CHART LIVE  -->
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+    <!--Gauge  -->
+    <script type="text/javascript" src="http://pubnub.github.io/eon/lib/eon.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+
+</head>
+
+{% block body %}
+
+
+<div>
+
+
+    <div class="centeralized">
+        <div>
+            <div>
+                <h1>Person Counter</h1>
+                <br>
+                <img src="{{ url_for('person_counter_video') }}" alt="Videostream wird geladen ... ">
+                <br>
+            </div>
+            <br>
+
+
+        </div>
+
+    </div>
+    <br>
+    <br>
+
+    <br>
+    <br>
+
+    <div>
+
+        <div>
+
+            <div>
+                <h1 class="sensor1"> Sensor : </h1>
+                <h1 class="sensor2">Raus : </h1>
+
+            </div>
+            <br>
+
+
+        </div>
+    </div>
+
+
+    <div class="container-fluid">
+        <!-- Example row of columns -->
+        <div class="row">
+            <div class="container-fluid" id="data-temperature">
+            </div>
+        </div>
+    </div>
+
+
+</div>
+<!--
+<script>
+
+        function requestData()
+        {
+            // Ajax call to get the Data from Flask
+            var requests = $.get('/personData');
+
+            var tm = requests.done(function (result)
+            {
+
+
+                // Add the Point
+                // Time Temperature
+                // 0 = in 1 = out
+
+                var data1 = [];
+                data1.push(result[0]);
+                data1.push(result[1]);
+
+
+
+
+
+                $(".sensor1").text("Rein: " +  data1[0] );
+                //$(".sensor2").text("Raus: " +  data1[1] );
+
+
+                // call it again after one second
+                setTimeout(requestData, 10000);
+
+            });
+        };
+
+
+
+
+
+</script>
+-->
+
+<script>
+        var chartTemperature;
+        function requestData()
+        {
+            // Ajax call to get the Data from Flask
+            var requests = $.get('/data');
+
+            var tm = requests.done(function (result)
+            {
+                // Temperature
+                var seriesTemperature = chartTemperature.series[0],
+                    shiftTemperature = seriesTemperature.data.length > 50;
+
+
+
+                // Add the Point
+                // Time Temperature\
+                // rein = 1, raus = 2
+                var data1 = [];
+                data1.push(result[0]);
+                data1.push(result[1] - result[2]);
+
+
+
+
+                chartTemperature.series[0].addPoint(data1, true, shiftTemperature);
+
+                $(".sensor1").text("");
+                $(".sensor1").text("Raus: " +  Math.round(result[1]) );
+                $(".sensor2").text("");
+                $(".sensor2").text("Rein: " +  Math.round(result[2]) );
+
+
+
+                // call it again after one second
+                setTimeout(requestData, 5000);
+
+            });
+        }
+
+        $(document).ready(function()
+        {
+            // --------------Chart 1 ----------------------------
+            chartTemperature = new Highcharts.Chart({
+                chart:
+                    {
+                    renderTo: 'data-temperature',
+                    defaultSeriesType: 'area',
+                    events: {
+                        load: requestData
+                            }
+                    },
+                title:
+                    {
+                    text: 'aktuelle Kunden im Geschäft'
+                    },
+                xAxis: {
+                    type: 'datetime',
+                    tickPixelInterval: 150,
+                    maxZoom: 20 * 1000
+                        },
+                yAxis: {
+                    minPadding: 0.2,
+                    maxPadding: 0.2,
+                    title: {
+                        text: 'Value',
+                        margin: 80
+                            }
+                         },
+                series: [{
+                    color : '#c23d23',
+                    lineColor: '#303030',
+                    name: 'aktuelle Kunden im Geschäft',
+                    data: []
+                }]
+            });
+
+
+        });
+
+
+
+
+
+
+
+
+
+</script>
+
+{% endblock %}
+

@@ -1,0 +1,72 @@
+{% extends 'layout.html' %}
+
+
+<head>
+    <!-- JQuery links  -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+
+    <!--High CHART LIVE  -->
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+    <!--Gauge  -->
+    <script type="text/javascript" src="http://pubnub.github.io/eon/lib/eon.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+
+</head>
+
+{% block body %}
+
+
+<div>
+
+
+    <div class="one">
+        <div>
+            <div>
+                <h1>Mask Detection</h1>
+                {% if setting.stream_on %}
+                <img src="{{ url_for('video') }}" width={{setting.w}} alt="Videostream wird geladen ... ">
+                {% else %}
+                <img src="/static/img/no_video.png" width={{setting.w}}>
+                {% endif %}
+
+
+                <br>
+            </div>
+            <br>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- BUTTON CONTROL -->
+<div class="two">
+    {% if setting.stream_on %}
+    <a id="cam-btn" href="/maskdetection?camera=off" class="btn btn-primary" role="button">Turn Off Camera</a>
+    {% else %}
+    <a id="cam-btn" href="/maskdetection?camera=on" class="btn btn-primary" role="button">Turn On Camera</a>
+    {% endif %}
+
+
+</div>
+
+
+
+
+</style>
+
+
+{% endblock %}
