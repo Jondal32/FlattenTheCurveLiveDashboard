@@ -60,6 +60,14 @@ limitOut = int(H / 2 - H / 5)
 
 net = cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
 
+USE_GPU = True
+
+if USE_GPU:
+    # set CUDA as the preferable backend and target
+    print("[INFO] setting preferable backend and target to CUDA...")
+    net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+    net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+
 global trackers
 global trackableObjects
 global rects
