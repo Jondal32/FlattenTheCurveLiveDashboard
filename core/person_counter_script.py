@@ -60,7 +60,7 @@ limitOut = int(H / 2 - H / 5)
 
 net = cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
 
-USE_GPU = True
+USE_GPU = False
 
 if USE_GPU:
     # set CUDA as the preferable backend and target

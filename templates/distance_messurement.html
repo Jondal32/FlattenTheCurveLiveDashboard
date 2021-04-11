@@ -29,40 +29,89 @@
 
 
 
-<div>
+<h1>Abstandskontrolle</h1>
+
+<div class="row">
+    <div class="col-md-6">
 
 
-    <div class="centeralized">
-        <div>
-            <div>
-                <h1>Abstandskontrolle</h1>
-                {% if setting.stream_on %}
-                <img src="{{ url_for('video') }}" width={{setting.w}} alt="Videostream wird geladen ... ">
-                {% else %}
-                <img src="/static/img/no_video.png" width={{setting.w}}>
-                {% endif %}
-                <br>
-            </div>
-            <br>
+        {% if setting.stream_on %}
+        <img src="{{ url_for('video') }}" width="100%" alt="Videostream wird geladen ... ">
+        {% else %}
+        <img src="/static/img/no_video.png" width="100%">
+        {% endif %}
 
 
-        </div>
+        <br>
+        <br>
+
 
     </div>
-    <br>
-    <br>
+
+
+    <div class="col-md-6">
+
+        <div class="row">
+            <!-- CARD TIME & FPS -->
+            <div class="col-md-6 mb-2">
+                <div class="card border-success text-center">
+                    <h6 class="card-header">
+                        Uhrzeit
+                    </h6>
+                    <div class="card-body text-success">
+                        <h4 id="time_card" class="card-text">00:00:00</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="card border-success text-center">
+                    <h6 class="card-header">
+                        FPS
+                    </h6>
+                    <div class="card-body text-success">
+                        <h4 id="fps" class="card-text">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Masken; ohne Masken -->
+        <div class="row">
+
+            <div class="col-md-6 mb-2">
+                <div class="card border-success text-center">
+                    <h6 class="card-header">
+                        Personen erkannt
+                    </h6>
+                    <div class="card-body text-success">
+                        <h4 id="person_count_card" class="card-text">0</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="card border-success text-center">
+                    <h6 class="card-header">
+                        Verstöße
+
+                    </h6>
+                    <div class="card-body text-success">
+                        <h4 id="violation_card" class="card-text">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 
 </div>
 
 <div>
     {% if setting.stream_on %}
-    <a id="cam-btn" href="/maskdetection?camera=off" class="btn btn-primary" role="button">Turn Off Camera</a>
+    <a id="cam-btn-off" href="/distance_messurement?camera=off" class="btn btn-primary" role="button">Stream beenden</a>
     {% else %}
-    <a id="cam-btn" href="/maskdetection?camera=on" class="btn btn-primary" role="button">Turn On Camera</a>
+    <a id="cam-btn-on" href="/distance_messurement?camera=on" class="btn btn-primary" role="button">Stream einschalten</a>
     {% endif %}
-
-
 </div>
 
 

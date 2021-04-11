@@ -4,6 +4,7 @@ from tensorflow.keras.preprocessing.image import img_to_array
 import numpy as np
 import cv2
 import imutils
+import time
 from webcamVideoStream import webcamVideoStream
 
 lock = threading.Lock()
@@ -76,6 +77,10 @@ class Stream:
         self.camera_src = 0  # camera_src
         self.camera = None
         self.prev_messages = ""
+        self.fps = 0
+        self.amount_detected = 0
+        self.withMask = 0
+        self.withoutMask = 0
         # self.socketio = socketio
         # self.detector = detector
         # self.counter = counter
@@ -88,16 +93,20 @@ class Stream:
             self.camera = None
 
     def open(self):
-        self.camera = cv2.VideoCapture(self.camera_src)#webcamVideoStream(src=self.camera_src).start()
+        self.camera = cv2.VideoCapture(self.camera_src)  # webcamVideoStream(src=self.camera_src).start()
 
     def status(self):
         return self.camera is not None
+
+    def get_fps(self):
+        return self.fps
 
     def generateFrames(self, faceNet, maskNet):
 
         while True:
             if self.camera is not None:
                 ret, frame = self.camera.read()
+                start = time.time()
                 if not ret:
                     break
 
@@ -109,10 +118,21 @@ class Stream:
 
                 # loop over the detected face locations and their corresponding
                 # locations
+                self.amount_detected = 0
+                self.withMask = 0
+                self.withoutMask = 0
+
                 for (box, pred) in zip(locs, preds):
                     # unpack the bounding box and predictions
                     (startX, startY, endX, endY) = box
                     (mask, withoutMask) = pred
+
+                    self.amount_detected += 1
+                    if mask > withoutMask:
+                        self.withMask += 1
+
+                    else:
+                        self.withoutMask += 1
 
                     # determine the class label and color we'll use to draw
                     # the bounding box and text
@@ -127,6 +147,8 @@ class Stream:
                     cv2.putText(frame, label, (startX, startY - 10),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
                     cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+
+                self.fps = 1.0 / (time.time() - start)
 
                 (flag, encodedImage) = cv2.imencode(".jpg", frame)
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')

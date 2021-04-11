@@ -27,46 +27,179 @@
 
 {% block body %}
 
+<h1>Mask Detection</h1>
 
-<div>
-
-
-    <div class="one">
-        <div>
-            <div>
-                <h1>Mask Detection</h1>
-                {% if setting.stream_on %}
-                <img src="{{ url_for('video') }}" width={{setting.w}} alt="Videostream wird geladen ... ">
-                {% else %}
-                <img src="/static/img/no_video.png" width={{setting.w}}>
-                {% endif %}
+<div class="row">
+    <div class="col-md-6">
 
 
-                <br>
-            </div>
-            <br>
+        {% if setting.stream_on %}
+        <img src="{{ url_for('video') }}" width="100%" alt="Videostream wird geladen ... ">
+        {% else %}
+        <img src="/static/img/no_video.png" width="100%">
+        {% endif %}
 
-        </div>
+
+        <br>
+        <br>
+
 
     </div>
 
+
+    <div class="col-md-6">
+
+        <div class="row">
+            <!-- CARD TIME & FPS -->
+            <div class="col-md-6 mb-2">
+                <div class="card border-success text-center">
+                    <h6 class="card-header">
+                        Uhrzeit
+                    </h6>
+                    <div class="card-body text-success">
+                        <h4 id="time_card" class="card-text">00:00:00</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="card border-success text-center">
+                    <h6 class="card-header">
+                        FPS
+                    </h6>
+                    <div class="card-body text-success">
+                        <h4 id="fps" class="card-text">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personen detected -->
+        <div class="row">
+
+
+            <div class="col-md-6 mb-2 offset-md-6">
+                <div class="card border-success text-center">
+                    <h6 class="card-header">
+                        Personen erkannt
+                    </h6>
+                    <div class="card-body text-success">
+                        <h4 id="person_counter_card" class="card-text">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Masken; ohne Masken -->
+        <div class="row">
+
+            <div class="col-md-6 mb-2">
+                <div class="card border-success text-center">
+                    <h6 class="card-header">
+                        Mit Masken
+                    </h6>
+                    <div class="card-body text-success">
+                        <h4 id="mask_card" class="card-text">0</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="card border-success text-center">
+                    <h6 class="card-header">
+                        Ohne Maske
+                    </h6>
+                    <div class="card-body text-success">
+                        <h4 id="no_mask_card" class="card-text">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 </div>
 
-<!-- BUTTON CONTROL -->
-<div class="two">
+<div>
     {% if setting.stream_on %}
-    <a id="cam-btn" href="/maskdetection?camera=off" class="btn btn-primary" role="button">Turn Off Camera</a>
+    <a id="cam-btn-off" href="/maskdetection?camera=off" class="btn btn-primary" role="button">Stream beenden</a>
     {% else %}
-    <a id="cam-btn" href="/maskdetection?camera=on" class="btn btn-primary" role="button">Turn On Camera</a>
+    <a id="cam-btn-on" href="/maskdetection?camera=on" class="btn btn-primary" role="button">Stream einschalten</a>
     {% endif %}
-
-
 </div>
 
 
 
+<script>
+{% if setting.stream_on %}
 
-</style>
+function request()
+{
+
+    $.get('/backgroundMask', function(data) {
+        $("#fps").text(data.currentFps.toFixed(2));
+        $("#person_counter_card").text(data.detected);
+        $("#mask_card").text(data.withMask);
+        $("#no_mask_card").text(data.withoutMask);
+
+    })
+    setTimeout(request, 1000);
+
+}
+request();
+
+
+{% endif %}
+
+</script>
+
+
+<!-- Infos für die Personen, Mask Cards -->
+<script>
+
+//###############################
+//https://stackoverflow.com/questions/27721671/call-a-flask-function-every-few-minutes
+
+
+//$(document).ready(function() {
+//    setInterval("ajaxd()",10000); // call every 10 seconds
+//});
+
+//function ajaxd() {
+  //reload result into element with id "sysStatus"
+//  $("#sysStatus").load("/myStatus", function() {  alert( "Load was performed." ); });
+
+//}
+
+
+//####################################################
+
+
+
+
+
+
+
+</script>
+
+
+<!-- Uhrzeit für time_card erstellen -->
+<script>
+
+    function time() {
+        var d = new Date();
+        var s = d.getSeconds();
+        var m = d.getMinutes();
+        var h = d.getHours();
+        $("#time_card").text(("0" + h).substr(-2) + ":" + ("0" + m).substr(-2) + ":" + ("0" + s).substr(-2));
+    }
+    setInterval(time, 1000);
+
+
+
+
+
+</script>
 
 
 {% endblock %}
+
+
