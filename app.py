@@ -1,6 +1,6 @@
 # flask
-from flask import flash, redirect, url_for, session, request
-from flask_socketio import SocketIO
+from flask import flash, redirect, url_for, session, request, send_file
+
 from flask_mysqldb import MySQL
 from flask import Flask, render_template, make_response, Response
 
@@ -52,9 +52,6 @@ app.config['MYSQL_DB'] = 'flask_dashboard'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 # init MYSQL
 mysql = MySQL(app)
-
-socketio = SocketIO()
-socketio.init_app(app)
 
 prototxtPath = 'models/face_detector/deploy.prototxt'
 weightsPath = 'models/face_detector/res10_300x300_ssd_iter_140000.caffemodel'
@@ -112,15 +109,16 @@ def index():
 def maskdetection():
     camera = request.args.get("camera")
 
-    if camera is not None and camera == 'off' and stream.status() == True:
-        stream.close()
+    if camera is not None and camera == 'off' and maskStream.status() == True:
+        maskStream.close()
         flash("Camera turn off!", "info")
-    elif camera is not None and camera == 'on' and stream.status() == False:
-        stream.open()
+    elif camera is not None and camera == 'on' and maskStream.status() == False:
+        maskStream.open()
         flash("Camera turn on!", "success")
 
     setting = dict(
-        stream_on=stream.status(),
+        stream_on=maskStream.status(),
+        fps=maskStream.get_fps(),
         w=600
     )
 
@@ -140,21 +138,18 @@ def person_counter():
 def distance_messurement():
     camera = request.args.get("camera")
 
-    if camera is not None and camera == 'off' and stream.status() == True:
-        stream.close()
+    if camera is not None and camera == 'off' and maskStream.status() == True:
+        maskStream.close()
         flash("Camera turn off!", "info")
-    elif camera is not None and camera == 'on' and stream.status() == False:
-        stream.open()
+    elif camera is not None and camera == 'on' and maskStream.status() == False:
+        maskStream.open()
         flash("Camera turn on!", "success")
 
     setting = dict(
-        stream_on=stream.status(),
+        stream_on=maskStream.status(),
         w=600
     )
     return render_template('distance_messurement.html', setting=setting)
-
-
-
 
 
 # Articles
@@ -182,10 +177,11 @@ def kontakt():
     return render_template('kontakt.html')
 
 
-@app.route('/analytics')
+@app.route('/analytics', methods=['GET', 'POST'])
 @is_logged_in
 @check_rights
 def analytics():
+    plot_visitor_today()
     return render_template('analytics.html')
 
 
@@ -269,8 +265,8 @@ def login():
                 session['logged_in'] = True
                 session['username'] = username
 
-                flash('Sie haben sich erfolgreich eingeloggt', 'success')
-                return redirect(url_for('login'))
+                flash('Erfolgreich eingeloggt', 'success')
+                return redirect(url_for('index'))
             else:
                 error = 'Benutzername oder Passwort falsch'
                 return render_template('login.html', error=error)
@@ -283,12 +279,13 @@ def login():
     return render_template('login.html')
 
 
+
 # Logout
 @app.route('/logout')
 @is_logged_in
 def logout():
     session.clear()
-    flash('Sie haben sich erfolgreich abgemeldet', 'success')
+    flash('Erfolgreich abgemeldet', 'success')
     return redirect(url_for('login'))
 
 
@@ -413,8 +410,7 @@ def delete_article(id):
 
 @app.route('/video', methods=['GET', 'POST'])
 def video():
-    global camera_off
-    return Response(stream.generateFrames(faceNet=faceNet, maskNet=maskNet),
+    return Response(maskStream.generateFrames(faceNet=faceNet, maskNet=maskNet),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
     # return Response(generateFrames(faceNet, maskNet, camera_off), mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -428,14 +424,11 @@ def person_counter_video():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-# return Response(generateFrames_PersonCounter(faceNet, maskNet, camera_off),
-#                mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/data', methods=["GET", "POST"])
 def data():
-    # Data Format
-    # [TIME, Temperature, Humidity]
+
 
     current_in = get_TotalIn()
     current_out = get_TotalOut()
@@ -456,8 +449,44 @@ def data():
     return response
 
 
+@app.route('/mask_detection_data', methods=["GET", "POST"])
+def mask_detection_data():
+    current_in = get_TotalIn()
+    current_out = get_TotalOut()
+
+    response = make_response(json.dumps(current_out))
+
+    response.content_type = 'application/json'
+
+    return response
+
+
+
+@app.route('/backgroundMask', methods=["GET", "POST"])
+def backgroundMask():
+    infos = dict(
+        currentFps=maskStream.get_fps(),
+        detected=maskStream.amount_detected,
+        withMask=maskStream.withMask,
+        withoutMask=maskStream.withoutMask
+    )
+
+    return infos
+
+@app.route('/backgroundMask', methods=["GET", "POST"])
+def backgroundDistance():
+    infos = dict(
+        currentFps=maskStream.get_fps(),
+        detected=maskStream.amount_detected,
+        withMask=maskStream.withMask,
+        withoutMask=maskStream.withoutMask
+    )
+
+    return infos
+
+
 if __name__ == '__main__':
-    stream = mask_stream(camera_src=0)
+    maskStream = mask_stream(camera_src=0)
 
     app.secret_key = 'secret123'
     app.run(debug=True)
