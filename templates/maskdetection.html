@@ -16,11 +16,11 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <!--<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">-->
 
 
 </head>
@@ -52,7 +52,7 @@
         <div class="row">
             <!-- CARD TIME & FPS -->
             <div class="col-md-6 mb-2">
-                <div class="card border-success text-center">
+                <div id="test" class="card text-center">
                     <h6 class="card-header">
                         Uhrzeit
                     </h6>
@@ -62,7 +62,7 @@
                 </div>
             </div>
             <div class="col-md-6 mb-2">
-                <div class="card border-success text-center">
+                <div class="card text-center">
                     <h6 class="card-header">
                         FPS
                     </h6>
@@ -72,13 +72,14 @@
                 </div>
             </div>
         </div>
+        <br>
 
         <!-- Personen detected -->
         <div class="row">
 
 
             <div class="col-md-6 mb-2 offset-md-6">
-                <div class="card border-success text-center">
+                <div class="card text-center">
                     <h6 class="card-header">
                         Personen erkannt
                     </h6>
@@ -89,11 +90,13 @@
             </div>
         </div>
 
+        <br>
+
         <!-- Masken; ohne Masken -->
         <div class="row">
 
             <div class="col-md-6 mb-2">
-                <div class="card border-success text-center">
+                <div class="card text-center">
                     <h6 class="card-header">
                         Mit Masken
                     </h6>
@@ -103,7 +106,7 @@
                 </div>
             </div>
             <div class="col-md-6 mb-2">
-                <div class="card border-success text-center">
+                <div class="card text-center">
                     <h6 class="card-header">
                         Ohne Maske
                     </h6>
@@ -126,8 +129,31 @@
     {% endif %}
 </div>
 
+<br>
+<br>
+
+{% if setting.stream_on %}
+    <div class="container-fluid">
+        <!-- Example row of columns -->
+        <div class="row">
+            <div class="container-fluid" id="piechart">
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div></div>
+{% endif %}
 
 
+
+<style>
+    #cards.row {
+   border-color: #28a745;
+}
+</style>
+
+
+<!-- Cards beschriften -->
 <script>
 {% if setting.stream_on %}
 
@@ -152,35 +178,6 @@ request();
 </script>
 
 
-<!-- Infos für die Personen, Mask Cards -->
-<script>
-
-//###############################
-//https://stackoverflow.com/questions/27721671/call-a-flask-function-every-few-minutes
-
-
-//$(document).ready(function() {
-//    setInterval("ajaxd()",10000); // call every 10 seconds
-//});
-
-//function ajaxd() {
-  //reload result into element with id "sysStatus"
-//  $("#sysStatus").load("/myStatus", function() {  alert( "Load was performed." ); });
-
-//}
-
-
-//####################################################
-
-
-
-
-
-
-
-</script>
-
-
 <!-- Uhrzeit für time_card erstellen -->
 <script>
 
@@ -193,7 +190,94 @@ request();
     }
     setInterval(time, 1000);
 
+</script>
 
+<!-- piechart -->
+<script>
+        var pieChart;
+        function requestData()
+        {
+            // Ajax call to get the Data from Flask
+            var requests = $.get('/mask_detection_pie_chart_data');
+
+            var tm = requests.done(function (result)
+            {
+
+                var updatedData = [{
+                        name: 'Maske',
+                        y: result[0],
+                        sliced: true,
+                        selected: true
+                        }, {
+                        name: 'Keine Maske',
+                        y: result[1]
+                        }];
+
+
+
+
+
+                pieChart.series[0].setData(updatedData, true);
+
+
+                // call it again after one second
+                setTimeout(requestData, 5000);
+
+            });
+        }
+
+        $(document).ready(function()
+        {
+            // --------------Chart 1 ----------------------------
+            pieChart = new Highcharts.Chart({
+                chart:
+                    {
+                    renderTo: 'piechart',
+                    defaultSeriesType: 'pie',
+                    events: {
+                        load: requestData
+                            }
+                    },
+                title:
+                    {
+                    text: 'Verteilung erkannter Masken des aktuellen Streams'
+                    },
+                tooltip: {
+                    pointFormat: '<b>{point.percentage:.1f}%</b>'
+                    },
+                accessibility: {
+                    point: {
+                        valueSuffix: '%'
+                    }
+                },
+                plotOptions: {
+                    pie: {
+                        allowPointSelect: true,
+                        cursor: 'pointer',
+                        dataLabels: {
+                        enabled: true,
+                        format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+                        }
+                    }
+                },
+                exporting: {
+                    buttons: {
+                        contextButton: {
+                            enabled: false
+                        }
+                    }
+                },
+
+                series: [{
+                    color : '#c23d23',
+                    lineColor: '#303030',
+                    name: 'Anteil erkannter Masken',
+                    data: []
+                }]
+            });
+
+
+        });
 
 
 
@@ -201,5 +285,8 @@ request();
 
 
 {% endblock %}
+
+
+
 
 

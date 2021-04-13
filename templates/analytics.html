@@ -4,50 +4,57 @@
     <script type="text/javascript" src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
 
 
-
-
 </head>
 {% block body %}
 
 <h1>Besucherzahlen</h1>
 <br>
 <div class="tab">
-    <button class="tablinks" onclick="openCity(event, 'Heute')">Heute</button>
-    <button class="tablinks" onclick="openCity(event, 'Gestern')">Gestern</button>
-    <button class="tablinks" onclick="openCity(event, 'Woche')">7 Tage</button>
-    <button class="tablinks" onclick="openCity(event, 'Gesamt')">Gesamt</button>
+    <button class="tablinks" onclick="openVisitorPlots(event, 'Heute')">Heute</button>
+    <button class="tablinks" onclick="openVisitorPlots(event, 'Gestern')">Gestern</button>
+    <button class="tablinks" onclick="openVisitorPlots(event, 'Woche')">7 Tage</button>
+    <button class="tablinks" onclick="openVisitorPlots(event, 'Gesamt')">Gesamt</button>
+
 </div>
 
 <!-- Tab content -->
 <div id="Heute" class="tabcontent">
     <h3>Heute <span id="today"></span></h3>
 
+    {% if setting.todayAvailable %}
 
-    <!--<img style="display: block; text-align: center;" src="{{ url_for('plots.plot_visitor_today') }}" alt="my plot">-->
     <br>
-    <div id="demodiv" style="width: 80%"></div>
+    <div id="demodiv" style="width:100%"></div>
     <br>
 
     <canvas id="myChart1"></canvas>
 
+    {% else %}
 
+    <h5>Für den heutigen Tag sind bisher noch keine Besucherzahlen erfasst worden.</h5>
 
+    {% endif %}
 
+    <!--<img style="display: block; text-align: center;" src="{{ url_for('plots.plot_visitor_today') }}" alt="my plot">-->
 
 
 </div>
 
-<style>
-
-
-</style>
-
-
 <div id="Gestern" class="tabcontent">
     <h3>Gestern <span id="yesterday"></span></h3>
 
+    {% if setting.yesterdayAvailable %}
+
     <img class="img_center"
          src="{{ url_for('plots.plot_visitor_yesterday') }}" alt="my plot">
+
+    {% else %}
+
+    <h4>Für den gestrigen Tag sind keine Besucherzahlen erfasst worden.</h4>
+
+    {% endif %}
+
+
 </div>
 
 <div id="Woche" class="tabcontent">
@@ -62,8 +69,56 @@
 
 </div>
 
+<br>
+<br>
+
+<h1>Abstandskontrolle</h1>
+
+
+<br>
+<br>
+
+<h1>Maskenerkennung</h1>
+
+<div class="tab">
+    <button class="tablinks" onclick="openVisitorPlots(event, 'maskToday')">Heute</button>
+    <button class="tablinks" onclick="openVisitorPlots(event, 'maskYesterday')">Gestern</button>
+    <button class="tablinks" onclick="openVisitorPlots(event, 'maskWeek')">7 Tage</button>
+    <button class="tablinks" onclick="openVisitorPlots(event, 'maskTotal')">Gesamt</button>
+
+
+</div>
+
+<!-- Tab content -->
+<div id="maskToday" class="tabcontent">
+    <h3>Heute <span id="today1"></span></h3>
+
+
+
+</div>
+
+<div id="maskYesterday" class="tabcontent">
+    <h3>Gestern <span id="yesterday1"></span></h3>
+
+
+
+
+</div>
+
+<div id="maskWeek" class="tabcontent">
+    <h3>Diese Woche <span id="7days1"></span></h3>
+
+
+</div>
+
+
+<div id="maskTotal" class="tabcontent">
+    <h3>Gesamt</h3>
+
+</div>
+
 <script>
-//today
+//das untere script
 
 
 //let filename = 'static/AnnualProjected-Modeled.csv';
@@ -128,9 +183,12 @@ d3.csv(filename).then(function(loadedData) {
   let chart = new Chart(document.getElementById('myChart1'), daten);
 });
 
+
 </script>
 
+<!-- dygraph -->
 <script>
+
 
     g = new Dygraph(
       document.getElementById("demodiv"),
@@ -139,17 +197,22 @@ d3.csv(filename).then(function(loadedData) {
         rollPeriod: 5,
         showRoller: true,
 
-        title: 'NYC vs. SF',
+        title: 'Besucherzahlen',
         ylabel: 'Besucherzahl',
-        legend: 'always'
+        width: '800',
+        legend: 'follow',
+        rightGap: '0'
       }
     );
 
+
 </script>
 
-
+<!-- visitor plot -->
 <script>
-    function openCity(evt, cityName) {
+    var x = 0;
+
+    function openVisitorPlots(evt, cityName) {
   // Declare all variables
   var i, tabcontent, tablinks;
 
@@ -165,11 +228,20 @@ d3.csv(filename).then(function(loadedData) {
     tablinks[i].className = tablinks[i].className.replace(" active", "");
   }
 
+
   // Show the current tab, and add an "active" class to the button that opened the tab
-  document.getElementById(cityName).style.display = "block";
-  evt.currentTarget.className += " active";
+  if (x == 0) {
+    document.getElementById(cityName).style.display = "block";
+    evt.currentTarget.className += " active";
+    x = 1;
+    } else {
+    document.getElementById(cityName).style.display = "hidden";
+    x = 0;
+    }
+
 }
 
+//Datum
 
 var dt = new Date();
 var dt_yesterday = new Date()
@@ -178,15 +250,15 @@ var dt_week = new Date()
 dt_week.setDate(dt_week.getDate() - 7);
 
 
-
+// visitor
 document.getElementById("today").innerHTML = dt.toLocaleDateString();
 document.getElementById("yesterday").innerHTML = dt_yesterday.toLocaleDateString();
 document.getElementById("7days").innerHTML = dt_week.toLocaleDateString() + " - " + dt.toLocaleDateString();
 
-
-
-
-
+// mask
+document.getElementById("today1").innerHTML = dt.toLocaleDateString();
+document.getElementById("yesterday1").innerHTML = dt_yesterday.toLocaleDateString();
+document.getElementById("7days1").innerHTML = dt_week.toLocaleDateString() + " - " + dt.toLocaleDateString();
 
 
 
@@ -194,10 +266,57 @@ document.getElementById("7days").innerHTML = dt_week.toLocaleDateString() + " - 
 </script>
 
 <style>
+    .tabcontent {
+  animation: fadeEffect 1s; /* Fading effect takes 1 second */
+}
 
+/* Go from zero to full opacity */
+@keyframes fadeEffect {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
 
+/* Style the tab */
+.tab {
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
 
+/* Style the buttons that are used to open the tab content */
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+}
 
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+
+.tabcontent.img_center {
+  display: flex;
+  justify-content: center;
+  align-items: center;"
+}
 
 
 
@@ -207,8 +326,6 @@ document.getElementById("7days").innerHTML = dt_week.toLocaleDateString() + " - 
 
 {% endblock %}
 
-{% block scripts %}
 
-{% endblock scripts %}
 
 

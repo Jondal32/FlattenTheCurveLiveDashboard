@@ -6,8 +6,10 @@ import cv2
 import imutils
 import time
 from webcamVideoStream import webcamVideoStream
+from datetime import datetime
 
 lock = threading.Lock()
+from app import mysql
 
 
 def detect_and_predict_mask(frame, faceNet, maskNet):
@@ -73,6 +75,7 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
 
 
 class Stream:
+
     def __init__(self, camera_src):
         self.camera_src = 0  # camera_src
         self.camera = None
@@ -81,16 +84,15 @@ class Stream:
         self.amount_detected = 0
         self.withMask = 0
         self.withoutMask = 0
-        # self.socketio = socketio
-        # self.detector = detector
-        # self.counter = counter
-        # self.buzz = buzz
-        # self.classes = classes
+        # jeweils 1 damit das pie chart funktioniert und wir nicht durch 0 teilen
+        self.maskFrames = 0
+        self.noMaskFrames = 0
 
     def close(self):
         if self.camera is not None:
             self.camera.release()
             self.camera = None
+            savePieChartData(self.maskFrames, self.noMaskFrames)
 
     def open(self):
         self.camera = cv2.VideoCapture(self.camera_src)  # webcamVideoStream(src=self.camera_src).start()
@@ -129,9 +131,11 @@ class Stream:
 
                     self.amount_detected += 1
                     if mask > withoutMask:
+                        self.maskFrames += 1
                         self.withMask += 1
 
                     else:
+                        self.noMaskFrames += 1
                         self.withoutMask += 1
 
                     # determine the class label and color we'll use to draw
@@ -152,3 +156,40 @@ class Stream:
 
                 (flag, encodedImage) = cv2.imencode(".jpg", frame)
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
+
+
+def savePieChartData(maskFrames, noMaskFrames):
+    try:
+
+        cur = mysql.connection.cursor()
+        result = cur.execute(
+            "SELECT * FROM maskproportion WHERE date = CURDATE()")
+
+        # wenn wir ein Ergebnis auf der Abfrage bekommen benutzen wir es ansonsten pushen wir ein neues ergebnis in die datenbank
+        if result > 0:
+            re = cur.fetchall()
+            # die alten Frames zu den neuen hinzufügen
+            updatedMaskFrames = maskFrames + re[0]["maskFrames"]
+            updatedNoMaskFrames = noMaskFrames + re[0]["noMaskFrames"]
+
+            cur.execute("UPDATE maskproportion SET maskFrames=%s, noMaskFrames=%s WHERE date=%s",
+                        (updatedMaskFrames, updatedNoMaskFrames, datetime.now().strftime('%Y-%m-%d')))
+
+            mysql.connection.commit()
+
+            # Close connection
+            cur.close()
+
+        else:
+            cur.execute("INSERT INTO maskproportion(date,maskFrames,noMaskFrames) VALUES(%s, %s, %s)",
+                        (datetime.now().strftime('%Y-%m-%d'), maskFrames, noMaskFrames))
+
+            # Commit to DB
+            mysql.connection.commit()
+
+            # Close connection
+            cur.close()
+
+
+    except ValueError:
+        print("Value Error beim speichern vom pie chart!")

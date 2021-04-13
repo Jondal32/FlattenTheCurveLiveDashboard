@@ -1,4 +1,4 @@
-from flask import Response, Blueprint
+from flask import Response, Blueprint, send_file
 
 import io
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -13,7 +13,6 @@ import pandas as pd
 
 import matplotlib.dates as mdates
 
-
 myFmt = mdates.DateFormatter('%H:%M')
 
 plots = Blueprint('plots', __name__, template_folder='templates')
@@ -23,13 +22,23 @@ from app import mysql
 
 @plots.route('/plot_visitor_today')
 def plot_visitor_today():
-    data = get_daily_visitor()
-    df = pd.DataFrame(data)
-    print(df)
-    fig = create_figure()
-    output = io.BytesIO()
-    FigureCanvas(fig).print_png(output)
-    return Response(output.getvalue(), mimetype='image/png')
+    try:
+        data = get_daily_visitor()
+        # print(type(data))
+        df = pd.DataFrame(data)
+        print(df.dtypes)
+        df_cut = df[["timestamp", "amount"]].to_csv('csv/today.csv', date_format='%Y/%m/%d %H:%M:%S', index=False)
+        # date_format = '%H:%M:%S'
+        print(type(df_cut))
+
+        return Response(df_cut, mimetype='text/csv')
+        # return send_file("csv/today.csv", mimetype='text/csv')
+        # fig = create_figure()
+        # output = io.BytesIO()
+        # FigureCanvas(fig).print_png(output)
+        # return Response(output.getvalue(), mimetype='image/png')
+    except ValueError:
+        return Response()
 
 
 @plots.route('/plot_visitor_yesterday')
@@ -90,30 +99,31 @@ def create_figure_week():
         axis.plot(x, y, label=label)
 
     handles, labels = axis.get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper right", bbox_to_anchor=(1,0))
+    fig.legend(handles, labels, loc="upper right", bbox_to_anchor=(1, 0))
 
     return fig
 
 
 def get_daily_visitor():
-    cur = mysql.connection.cursor()
-    result = cur.execute(
-        "SELECT * FROM person_counter WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY ORDER "
-        "BY timestamp")
-    daily = cur.fetchall()
+    try:
+        cur = mysql.connection.cursor()
+        result = cur.execute(
+            "SELECT * FROM person_counter WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY ORDER "
+            "BY timestamp")
+        daily = cur.fetchall()
 
-    rows = []
+        rows = []
 
-    for row in cur:
-        rows.append(row)
-        print(type(row))
+        for row in cur:
+            rows.append(row)
 
-
-    if result > 0:
-        cur.close()
-        return rows
-    else:
-        cur.close()
+        if result > 0:
+            cur.close()
+            return rows
+        else:
+            cur.close()
+            return 0
+    except ValueError:
         return 0
 
 

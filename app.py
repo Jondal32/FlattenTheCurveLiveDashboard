@@ -20,8 +20,6 @@ from create_visitor_plots import *
 from core.person_counter_script import genFrames
 from core.person_counter_script import get_TotalIn, get_TotalOut
 
-from core.mask_detection_2 import Stream as mask_stream
-
 ###
 import threading
 
@@ -61,6 +59,7 @@ faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 # faceNet.setPreferableTarget(cv2.dnn. DNN_TARGET_CUDA) #or cv2.dnn.DNN_TARGET_CUDA_FP16
 
 maskNet = load_model('models/face_detection_mobilenetv2')
+from core.mask_detection_2 import Stream as mask_stream
 
 camera_off = False
 
@@ -111,10 +110,10 @@ def maskdetection():
 
     if camera is not None and camera == 'off' and maskStream.status() == True:
         maskStream.close()
-        flash("Camera turn off!", "info")
+        flash("Stream beendet", "info")
     elif camera is not None and camera == 'on' and maskStream.status() == False:
         maskStream.open()
-        flash("Camera turn on!", "success")
+        flash("Stream erfolgreich gestartet!", "success")
 
     setting = dict(
         stream_on=maskStream.status(),
@@ -140,10 +139,10 @@ def distance_messurement():
 
     if camera is not None and camera == 'off' and maskStream.status() == True:
         maskStream.close()
-        flash("Camera turn off!", "info")
+        flash("Stream beendet", "info")
     elif camera is not None and camera == 'on' and maskStream.status() == False:
         maskStream.open()
-        flash("Camera turn on!", "success")
+        flash("Stream erfolgreich gestartet", "success")
 
     setting = dict(
         stream_on=maskStream.status(),
@@ -182,7 +181,11 @@ def kontakt():
 @check_rights
 def analytics():
     plot_visitor_today()
-    return render_template('analytics.html')
+    setting = dict(
+        todayAvailable=True,
+        yesterdayAvailable=False,
+    )
+    return render_template('analytics.html', setting=setting)
 
 
 # Single Article
@@ -277,7 +280,6 @@ def login():
             return render_template('login.html', error=error)
 
     return render_template('login.html')
-
 
 
 # Logout
@@ -424,12 +426,8 @@ def person_counter_video():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-
-
 @app.route('/data', methods=["GET", "POST"])
 def data():
-
-
     current_in = get_TotalIn()
     current_out = get_TotalOut()
 
@@ -441,6 +439,29 @@ def data():
     cur.close()
 
     data = [time2.strftime('%Y-%m-%d %H:%M:%S'), current_in, current_out]
+
+    response = make_response(json.dumps(data))
+
+    response.content_type = 'application/json'
+
+    return response
+
+
+@app.route('/mask_detection_pie_chart_data', methods=["GET", "POST"])
+def mask_detection_pie_chart_data():
+    maskFrames = maskStream.maskFrames
+    noMaskFrames = maskStream.noMaskFrames
+    maskProportion = None
+    noMaskProportion = None
+
+    if maskFrames != 0 or noMaskFrames != 0:
+        maskProportion = round((maskFrames / (maskFrames + noMaskFrames)), 2)
+        noMaskProportion = round((noMaskFrames / (maskFrames + noMaskFrames)), 2)
+    else:
+        maskProportion = 0
+        noMaskProportion = 0
+
+    data = [maskProportion, noMaskProportion]
 
     response = make_response(json.dumps(data))
 
@@ -461,7 +482,6 @@ def mask_detection_data():
     return response
 
 
-
 @app.route('/backgroundMask', methods=["GET", "POST"])
 def backgroundMask():
     infos = dict(
@@ -472,6 +492,7 @@ def backgroundMask():
     )
 
     return infos
+
 
 @app.route('/backgroundMask', methods=["GET", "POST"])
 def backgroundDistance():
