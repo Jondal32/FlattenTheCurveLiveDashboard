@@ -1,4 +1,5 @@
-from flask import Response, Blueprint, send_file
+from flask import Response, Blueprint, send_file, make_response
+
 
 import io
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -10,6 +11,9 @@ import pandas as pd
 from datetime import datetime as dt
 from datetime import timedelta
 import pandas as pd
+
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import matplotlib.dates as mdates
 
@@ -38,7 +42,7 @@ def plot_visitor_today():
         # FigureCanvas(fig).print_png(output)
         # return Response(output.getvalue(), mimetype='image/png')
     except ValueError:
-        return Response()
+        return 0
 
 
 @plots.route('/plot_visitor_yesterday')
@@ -65,8 +69,25 @@ def plot_visitor_overall():
     return Response(output.getvalue(), mimetype='image/png')
 
 
+@plots.route('/plot_heatmap', methods=['GET', 'POST'])
+def plot_heatmap():
+    print("heatmap klappt vor figure")
+    figure = createDistanceMessurementHeatmap()
+    print("heatmap klappt")
+    #output = io.BytesIO()
+    #FigureCanvas(figure).print_png(output)
+    #return Response(output.getvalue(), mimetype='image/png')
+    canvas = FigureCanvas(figure)
+    output = io.BytesIO()
+    canvas.print_png(output)
+    response = make_response(output.getvalue())
+    response.mimetype = 'image/png'
+    return response
+
+
 def create_figure():
     fig = Figure(figsize=(11, 4))
+
     axis = fig.add_subplot(1, 1, 1)
 
     x = np.array([datetime.datetime(2013, 9, 28, i, 0) for i in range(7, 22)])
@@ -77,6 +98,7 @@ def create_figure():
     xs = range(100)
     ys = [rand.randint(1, 50) for x in xs]
     axis.plot(x, y)
+
     return fig
 
 
@@ -127,17 +149,63 @@ def get_daily_visitor():
         return 0
 
 
-"""
-fileNames = [file for file in fileNames if '.csv' in file]
+def createDistanceMessurementHeatmap():
+    img = plt.imread("static/img/pedastrians für heatmap.JPG")
+    df = pd.read_csv("static/img/testdata.csv")
 
-### Loop over all files
-for file in fileNames:
-    ### Read .csv file and append to list
-    df = pd.read_csv(PATH + file, index_col=0)
+    fig = Figure(dpi=100)
 
-    ### Create line for every file
-    plt.plot(df)
+    ax = fig.add_subplot(1, 1, 1)
 
-### Generate the plot
-plt.show()
-"""
+    ymin, ymax = ax.get_ylim()
+    xmin, xmax = ax.get_xlim()
+    print(xmax, ymin)
+
+    # Create the heatmap
+    kde = sns.kdeplot(
+        x=df['x'],
+        y=df['y'],
+        shade=True,
+        thresh=0.05,
+        alpha=.4,
+        n_levels=10,
+        cmap='magma',
+        ax=ax
+    )
+
+    ax.imshow(img)
+
+    # plt.ylim(0,ymin)
+    # plt.xlim(0,xmax)
+    # ax.invert_yaxis()
+    ax.set_axis_off()
+    return fig
+
+    """
+
+    fig, ax = plt.subplots()
+    ax.imshow(img)
+    ymin, ymax = ax.get_ylim()
+    xmin, xmax = ax.get_xlim()
+
+    # Create the heatmap
+    kde = sns.kdeplot(
+        x=df['x'],
+        y=df['y'],
+        shade=True,
+        thresh=0.05,
+        alpha=.4,
+        n_levels=10,
+        cmap='magma',
+        ax=ax
+    )
+
+    plt.ylim(0, ymin)
+    plt.xlim(0, xmax)
+    ax.invert_yaxis()
+    # ax.set_axis_off()
+    plt.close()
+
+    return fig
+    # fig.savefig("fig2.png", bbox_inches='tight', pad_inches=0)
+    """

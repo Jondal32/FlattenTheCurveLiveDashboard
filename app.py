@@ -4,6 +4,18 @@ from flask import flash, redirect, url_for, session, request, send_file
 from flask_mysqldb import MySQL
 from flask import Flask, render_template, make_response, Response
 
+import backgroundTasks
+
+app = Flask(__name__)
+# Config MySQL
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = ''
+app.config['MYSQL_DB'] = 'flask_dashboard'
+app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
+# init MYSQL
+mysql = MySQL(app)
+
 # core
 from core.stream import Stream
 from core.jetson_cam import camera
@@ -16,9 +28,11 @@ from functools import wraps
 from core.mask_detection_scripts import generateFrames
 from person_counter_scripts import generateFrames_PersonCounter
 from create_visitor_plots import *
+from create_pie_plots import *
 
 from core.person_counter_script import genFrames
 from core.person_counter_script import get_TotalIn, get_TotalOut
+from backgroundTasks import *
 
 ###
 import threading
@@ -38,18 +52,9 @@ lock = threading.Lock()
 ###
 
 
-app = Flask(__name__)
-
 app.register_blueprint(plots)
-
-# Config MySQL
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'flask_dashboard'
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
-# init MYSQL
-mysql = MySQL(app)
+app.register_blueprint(piePlots)
+app.register_blueprint(backgroundTasks)
 
 prototxtPath = 'models/face_detector/deploy.prototxt'
 weightsPath = 'models/face_detector/res10_300x300_ssd_iter_140000.caffemodel'
@@ -60,6 +65,7 @@ faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
 maskNet = load_model('models/face_detection_mobilenetv2')
 from core.mask_detection_2 import Stream as mask_stream
+from core.person_counter_script_2 import Stream as person_counter_stream
 
 camera_off = False
 
@@ -82,14 +88,16 @@ def check_rights(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         cur = mysql.connection.cursor()
-        rights = cur.execute("SELECT rights FROM users WHERE username = %s", [session['username']])
+        rights = cur.execute("SELECT 'user_rights' FROM users WHERE username = %s", [session['username']])
 
         cur.close()
 
         if 'logged_in' in session and rights == 1:
             return f(*args, **kwargs)
         else:
-            flash('Kein Zugriff! Bitte kontaktieren Sie ihren Vorgesetzen oder den Datenbank Administrator', 'danger')
+            flash(
+                'Kein Zugriff! Bitte kontaktieren Sie Ihren Vorgesetzen oder den Datenbank Administrator um die passendes Rechte zu bekommen',
+                'danger')
             return redirect(url_for('index'))
 
     return wrap
@@ -128,7 +136,23 @@ def maskdetection():
 @is_logged_in
 @check_rights
 def person_counter():
-    return render_template('person_counter.html')
+    camera = request.args.get("camera")
+    predefined_person_count = request.args.get("persons")
+
+    if camera is not None and camera == 'off' and personCounterStream.status() == True:
+        personCounterStream.close()
+        flash("Stream beendet", "info")
+    elif camera is not None and camera == 'on' and personCounterStream.status() == False:
+        if predefined_person_count is not None:
+            personCounterStream.totalIn = int(predefined_person_count)
+        personCounterStream.open()
+        flash("Stream erfolgreich gestartet", "success")
+
+    setting = dict(
+        stream_on=personCounterStream.status(),
+
+    )
+    return render_template('person_counter.html', setting=setting)
 
 
 @app.route('/distance_messurement')
@@ -183,9 +207,27 @@ def analytics():
     plot_visitor_today()
     setting = dict(
         todayAvailable=True,
-        yesterdayAvailable=False,
+        yesterdayAvailable=True,
     )
-    return render_template('analytics.html', setting=setting)
+
+    PieChartData.createPieChartDataToday()
+    PieChartData.createPieChartDataYesterday()
+    PieChartData.createPieChartDataWeek()
+    PieChartData.createPieChartDataTotal()
+
+    piePlotsSettings = dict(
+        todayAvailable=PieChartData.dataToday if not None else False,
+        yesterdayAvailable=PieChartData.dataYesterday if not None else False,
+        weekAvailable=PieChartData.dataWeek if not None else False,
+        totalAvailable=PieChartData.dataTotal if not None else False,
+
+        pieChartDataToday=PieChartData.dataToday,
+        pieChartDataYesterday=PieChartData.dataYesterday,
+        pieChartDataWeek=PieChartData.dataWeek,
+        pieChartDataTotal=PieChartData.dataTotal
+    )
+
+    return render_template('analytics.html', setting=setting, piePlotsSettings=piePlotsSettings)
 
 
 # Single Article
@@ -410,6 +452,11 @@ def delete_article(id):
     return redirect(url_for('dashboard'))
 
 
+@app.route('/datenschutz')
+def datenschutz():
+    return render_template('datenschutz.html')
+
+
 @app.route('/video', methods=['GET', 'POST'])
 def video():
     return Response(maskStream.generateFrames(faceNet=faceNet, maskNet=maskNet),
@@ -422,21 +469,23 @@ def person_counter_video():
     # return Response(stream.gen_frames(),
     #                mimetype='multipart/x-mixed-replace; boundary=frame')
     global camera_off
-    return Response(genFrames(),
+    # return Response(genFrames(),
+    #                mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(personCounterStream.generateFrames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/data', methods=["GET", "POST"])
 def data():
-    current_in = get_TotalIn()
-    current_out = get_TotalOut()
+    current_in = personCounterStream.get_TotalIn()
+    current_out = personCounterStream.get_TotalOut()
 
-    cur = mysql.connection.cursor()
-    cur.execute("INSERT INTO person_counter(timestamp, amount) VALUES (%s,%s)",
-                [time2.strftime('%Y-%m-%d %H:%M:%S'), current_in - current_out])
+    # cur = mysql.connection.cursor()
+    # cur.execute("INSERT INTO person_counter(timestamp, amount) VALUES (%s,%s)",
+    #            [time2.strftime('%Y-%m-%d %H:%M:%S'), current_in - current_out])
 
-    mysql.connection.commit()
-    cur.close()
+    # mysql.connection.commit()
+    # cur.close()
 
     data = [time2.strftime('%Y-%m-%d %H:%M:%S'), current_in, current_out]
 
@@ -470,6 +519,7 @@ def mask_detection_pie_chart_data():
     return response
 
 
+## wird nicht benutzt
 @app.route('/mask_detection_data', methods=["GET", "POST"])
 def mask_detection_data():
     current_in = get_TotalIn()
@@ -494,6 +544,19 @@ def backgroundMask():
     return infos
 
 
+@app.route('/backgroundPersonCounter', methods=["GET", "POST"])
+def backgroundPersonCounter():
+    infos = dict(
+        currentFps=personCounterStream.get_fps(),
+        currentAmountOfPersonInside=personCounterStream.totalPersonsInside,
+        personsIn=personCounterStream.totalIn,
+        personsOut=personCounterStream.totalOut
+
+    )
+
+    return infos
+
+
 @app.route('/backgroundMask', methods=["GET", "POST"])
 def backgroundDistance():
     infos = dict(
@@ -508,6 +571,8 @@ def backgroundDistance():
 
 if __name__ == '__main__':
     maskStream = mask_stream(camera_src=0)
+    personCounterStream = person_counter_stream()
+    PieChartData = PieChartData()
 
     app.secret_key = 'secret123'
     app.run(debug=True)

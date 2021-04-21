@@ -11,6 +11,7 @@
     <script src="http://code.highcharts.com/highcharts-more.js"></script>
     <script src="http://code.highcharts.com/modules/exporting.js"></script>
 
+
     <!--Gauge  -->
     <script type="text/javascript" src="http://pubnub.github.io/eon/lib/eon.js"></script>
 
@@ -133,23 +134,23 @@
 <br>
 
 {% if setting.stream_on %}
-    <div class="container-fluid">
-        <!-- Example row of columns -->
-        <div class="row">
-            <div class="container-fluid" id="piechart">
-            </div>
+<div class="container-fluid">
+    <!-- Example row of columns -->
+    <div class="row">
+        <div class="container-fluid" id="piechart">
         </div>
     </div>
+</div>
 {% else %}
-    <div></div>
+<div></div>
 {% endif %}
-
 
 
 <style>
     #cards.row {
    border-color: #28a745;
 }
+
 </style>
 
 
@@ -175,6 +176,7 @@ request();
 
 {% endif %}
 
+
 </script>
 
 
@@ -189,6 +191,7 @@ request();
         $("#time_card").text(("0" + h).substr(-2) + ":" + ("0" + m).substr(-2) + ":" + ("0" + s).substr(-2));
     }
     setInterval(time, 1000);
+
 
 </script>
 
@@ -272,12 +275,21 @@ request();
                     color : '#c23d23',
                     lineColor: '#303030',
                     name: 'Anteil erkannter Masken',
-                    data: []
+                    data: [{
+                        name: 'Maske',
+                        y: 60,
+                        sliced: true,
+                        selected: true
+                        }, {
+                        name: 'Keine Maske',
+                        y: 40
+                        }]
                 }]
             });
 
 
         });
+
 
 
 

@@ -3,12 +3,20 @@
     <script type="text/javascript" src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
     <script type="text/javascript" src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
 
+    <!--High CHART LIVE  -->
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
 
 </head>
 {% block body %}
 
 <h1>Besucherzahlen</h1>
-<br>
+
 <div class="tab">
     <button class="tablinks" onclick="openVisitorPlots(event, 'Heute')">Heute</button>
     <button class="tablinks" onclick="openVisitorPlots(event, 'Gestern')">Gestern</button>
@@ -74,48 +82,108 @@
 
 <h1>Abstandskontrolle</h1>
 
-
-<br>
-<br>
-
-<h1>Maskenerkennung</h1>
-
 <div class="tab">
-    <button class="tablinks" onclick="openVisitorPlots(event, 'maskToday')">Heute</button>
-    <button class="tablinks" onclick="openVisitorPlots(event, 'maskYesterday')">Gestern</button>
-    <button class="tablinks" onclick="openVisitorPlots(event, 'maskWeek')">7 Tage</button>
-    <button class="tablinks" onclick="openVisitorPlots(event, 'maskTotal')">Gesamt</button>
+    <button class="tablinks" onclick="openVisitorPlots(event, 'heatMap')">Heat Map</button>
 
 
 </div>
 
-<!-- Tab content -->
-<div id="maskToday" class="tabcontent">
-    <h3>Heute <span id="today1"></span></h3>
+<!-- heatmap -->
+<div id="heatMap" class="tabcontent">
+    <h3>Bereiche mit gehäuften Abstandsunterschreitungen</h3>
 
 
-
-</div>
-
-<div id="maskYesterday" class="tabcontent">
-    <h3>Gestern <span id="yesterday1"></span></h3>
-
-
-
-
-</div>
-
-<div id="maskWeek" class="tabcontent">
-    <h3>Diese Woche <span id="7days1"></span></h3>
+    <img style="display: block" src="{{ url_for('plots.plot_heatmap') }}">
 
 
 </div>
 
 
-<div id="maskTotal" class="tabcontent">
-    <h3>Gesamt</h3>
+<br>
+<br>
 
+<!-- Masken Analytics --->
+<div>
+    <h1>Maskenerkennung</h1>
+
+    <div class="tab">
+        <button class="tablinks" onclick="openVisitorPlots(event, 'maskToday')">Heute</button>
+        <button class="tablinks" onclick="openVisitorPlots(event, 'maskYesterday')">Gestern</button>
+        <button class="tablinks" onclick="openVisitorPlots(event, 'maskWeek')">7 Tage</button>
+        <button class="tablinks" onclick="openVisitorPlots(event, 'maskTotal')">Gesamt</button>
+
+
+    </div>
+
+    <!-- Tab content -->
+    <div id="maskToday" class="tabcontent">
+        <h3>Heute <span id="today1"></span></h3>
+
+
+        {% if piePlotsSettings.todayAvailable %}
+        <br>
+        <div class="container-fluid" id="pieChartToday"></div>
+
+        {% else %}
+
+        <h5>Für den heutigen Tag sind bisher noch keine Personen mit Masken erfasst worden.</h5>
+
+        {% endif %}
+
+
+    </div>
+
+    <div id="maskYesterday" class="tabcontent">
+        <h3>Gestern <span id="yesterday1"></span></h3>
+
+
+        {% if piePlotsSettings.yesterdayAvailable %}
+        <br>
+        <div class="container-fluid" id="pieChartYesterday"></div>
+        {% else %}
+
+        <h5>Für den gestrigen Tag sind bisher noch keine Personen mit Masken erfasst worden.</h5>
+
+        {% endif %}
+
+
+    </div>
+
+    <div id="maskWeek" class="tabcontent">
+        <h3>Diese Woche <span id="7days1"></span></h3>
+
+        {% if piePlotsSettings.weekAvailable %}
+        <br>
+        <div class="container-fluid" id="pieChartWeek"></div>
+
+        {% else %}
+
+        <h5>Für diese Woche sind bisher noch keine Personen mit Masken erfasst worden.</h5>
+
+        {% endif %}
+
+
+    </div>
+
+
+    <div id="maskTotal" class="tabcontent">
+        <h3>Gesamter Zeitraum</h3>
+
+        {% if piePlotsSettings.totalAvailable %}
+        <br>
+        <div class="container-fluid" id="pieChartTotal"></div>
+
+        {% else %}
+
+        <h5>Für den gesamten Zeitraum sind bisher noch keine Personen mit Masken erfasst worden.</h5>
+
+        {% endif %}
+
+    </div>
 </div>
+<br>
+<br>
+
 
 <script>
 //das untere script
@@ -184,6 +252,14 @@ d3.csv(filename).then(function(loadedData) {
 });
 
 
+
+
+
+
+
+
+
+
 </script>
 
 <!-- dygraph -->
@@ -204,6 +280,14 @@ d3.csv(filename).then(function(loadedData) {
         rightGap: '0'
       }
     );
+
+
+
+
+
+
+
+
 
 
 </script>
@@ -263,6 +347,256 @@ document.getElementById("7days1").innerHTML = dt_week.toLocaleDateString() + " -
 
 
 
+
+
+
+
+
+
+
+
+</script>
+<!-- pieChartToday-->
+<script>
+var request = {{ piePlotsSettings.pieChartDataToday }};
+
+Highcharts.chart('pieChartToday', {
+    chart: {
+        plotBackgroundColor: null,
+        plotBorderWidth: null,
+        plotShadow: false,
+        type: 'pie'
+    },
+    title: {
+        text: 'Relative Verteilung zwischen Maske/keine Maske der verarbeiteten Frames mit Gesichtern'
+    },
+    tooltip: {
+        pointFormat: '<b>{point.percentage:.1f}%</b><br><b>{point.y} Frames</b>'
+    },
+    accessibility: {
+        point: {
+            valueSuffix: '%'
+        }
+    },
+    plotOptions: {
+        pie: {
+            allowPointSelect: true,
+            cursor: 'pointer',
+            dataLabels: {
+                enabled: true,
+                format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+            }
+        }
+    },
+    exporting: {
+                    buttons: {
+                        contextButton: {
+                            enabled: false
+                        }
+                    }
+                },
+    series: [{
+        colorByPoint: true,
+        data: [{
+                        name: 'Maske',
+                        y: request[0],
+                        sliced: true,
+                        selected: true
+                        }, {
+                        name: 'Keine Maske',
+                        y: request[1]
+                        }]
+    }]
+});
+
+
+
+
+</script>
+<!-- piechart yesterday -->
+<script>
+
+        var request = {{ piePlotsSettings.pieChartDataYesterday }};
+
+Highcharts.chart('pieChartYesterday', {
+    chart: {
+        plotBackgroundColor: null,
+        plotBorderWidth: null,
+        plotShadow: false,
+        type: 'pie'
+    },
+    title: {
+        text: 'Relative Verteilung zwischen Maske/keine Maske der verarbeiteten Frames mit Gesichtern'
+    },
+    tooltip: {
+        pointFormat: '<b>{point.percentage:.1f}%</b><br><b>{point.y} Frames</b>'
+    },
+    accessibility: {
+        point: {
+            valueSuffix: '%'
+        }
+    },
+    plotOptions: {
+        pie: {
+            allowPointSelect: true,
+            cursor: 'pointer',
+            dataLabels: {
+                enabled: true,
+                format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+            }
+        }
+    },
+    exporting: {
+                    buttons: {
+                        contextButton: {
+                            enabled: false
+                        }
+                    }
+                },
+    series: [{
+        colorByPoint: true,
+        data: [{
+                        name: 'Maske',
+                        y: request[0],
+                        sliced: true,
+                        selected: true
+                        }, {
+                        name: 'Keine Maske',
+                        y: request[1]
+                        }]
+    }]
+});
+
+
+
+
+
+
+
+</script>
+<!-- piechart week-->
+<script>
+
+
+        var request = {{ piePlotsSettings.pieChartDataWeek }};
+
+Highcharts.chart('pieChartWeek', {
+    chart: {
+        plotBackgroundColor: null,
+        plotBorderWidth: null,
+        plotShadow: false,
+        type: 'pie'
+    },
+    title: {
+        text: 'Relative Verteilung zwischen Maske/keine Maske der verarbeiteten Frames mit Gesichtern'
+    },
+    tooltip: {
+        pointFormat: '<b>{point.percentage:.1f}%</b><br><b>{point.y} Frames</b>'
+    },
+    accessibility: {
+        point: {
+            valueSuffix: '%'
+        }
+    },
+    plotOptions: {
+        pie: {
+            allowPointSelect: true,
+            cursor: 'pointer',
+            dataLabels: {
+                enabled: true,
+                format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+            }
+        }
+    },
+    exporting: {
+                    buttons: {
+                        contextButton: {
+                            enabled: false
+                        }
+                    }
+                },
+    series: [{
+        colorByPoint: true,
+        data: [{
+                        name: 'Maske',
+                        y: request[0],
+                        sliced: true,
+                        selected: true
+                        }, {
+                        name: 'Keine Maske',
+                        y: request[1]
+                        }]
+    }]
+});
+
+
+
+
+
+
+
+
+</script>
+<!-- piechart total-->
+<script>
+
+
+        var request = {{ piePlotsSettings.pieChartDataTotal }};
+
+Highcharts.chart('pieChartTotal', {
+    chart: {
+        plotBackgroundColor: null,
+        plotBorderWidth: null,
+        plotShadow: false,
+        type: 'pie'
+    },
+    title: {
+        text: 'Relative Verteilung zwischen Maske/keine Maske der verarbeiteten Frames mit Gesichtern'
+    },
+    tooltip: {
+        pointFormat: '<b>{point.percentage:.1f}%</b><br><b>{point.y} Frames</b>'
+    },
+    accessibility: {
+        point: {
+            valueSuffix: '%'
+        }
+    },
+    plotOptions: {
+        pie: {
+            allowPointSelect: true,
+            cursor: 'pointer',
+            dataLabels: {
+                enabled: true,
+                format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+            }
+        }
+    },
+    exporting: {
+                    buttons: {
+                        contextButton: {
+                            enabled: false
+                        }
+                    }
+                },
+    series: [{
+        colorByPoint: true,
+        data: [{
+                        name: 'Maske',
+                        y: request[0],
+                        sliced: true,
+                        selected: true
+                        }, {
+                        name: 'Keine Maske',
+                        y: request[1]
+                        }]
+    }]
+});
+
+
+
+
+
+
 </script>
 
 <style>
@@ -317,6 +651,14 @@ document.getElementById("7days1").innerHTML = dt_week.toLocaleDateString() + " -
   justify-content: center;
   align-items: center;"
 }
+
+
+
+
+
+
+
+
 
 
 

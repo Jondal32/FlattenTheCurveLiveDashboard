@@ -29,44 +29,156 @@
 
 
 <div>
+    <h1>Person Counter</h1>
+    <div class="row">
+        <div class="col-md-6">
+
+            {% if setting.stream_on %}
+            <img src="{{ url_for('person_counter_video') }}" width="100%" alt="Videostream wird geladen ... ">
+            {% else %}
+            <img src="/static/img/no_video.png" width="100%">
+            {% endif %}
 
 
-    <div class="centeralized">
-        <div>
-            <div>
-                <h1>Person Counter</h1>
-                <br>
-                <img src="{{ url_for('person_counter_video') }}" alt="Videostream wird geladen ... ">
-                <br>
-            </div>
+            <br>
             <br>
 
 
         </div>
 
-    </div>
-    <br>
-    <br>
 
-    <br>
-    <br>
-
-    <div>
-
-        <div>
-
-            <div>
-                <h1 class="sensor1"> Sensor : </h1>
-                <h1 class="sensor2">Raus : </h1>
-
+        <div class="col-md-6">
+            <!-- Uhrzeit & FPS -->
+            <div class="row">
+                <div class="col-md-6 mb-2">
+                    <div class="card text-center">
+                        <h6 class="card-header">
+                            Uhrzeit
+                        </h6>
+                        <div class="card-body text-success">
+                            <h4 id="time_card" class="card-text">00:00:00</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <div class="card text-center">
+                        <h6 class="card-header">
+                            FPS
+                        </h6>
+                        <div class="card-body text-success">
+                            <h4 id="fps" class="card-text">0</h4>
+                        </div>
+                    </div>
+                </div>
             </div>
             <br>
 
+            <!-- Personen insgesamt im Laden -->
+            <div class="row">
 
+
+                <div class="col-md-6 mb-2 offset-md-6">
+                    <div class="card text-center">
+                        <h6 class="card-header">
+                            Personen im Geschäft
+                        </h6>
+                        <div class="card-body text-success">
+                            <h4 id="person_total_in_business" class="card-text">0</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <br>
+
+            <!-- Personen rein und raus -->
+            <div class="row">
+
+                <div class="col-md-6 mb-2">
+                    <div class="card text-center">
+                        <h6 class="card-header">
+                            Betreten
+                        </h6>
+                        <div class="card-body text-success">
+                            <h4 id="person_in" class="card-text">0</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-2">
+                    <div class="card text-center">
+                        <h6 class="card-header">
+                            Verlassen
+
+                        </h6>
+                        <div class="card-body text-success">
+                            <h4 id="person_out" class="card-text">0</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
+
+    </div>
+</div>
+
+<!-- On/Off Button -->
+<div>
+    {% if setting.stream_on %}
+    <a id="cam-btn-off" href="/person_counter?camera=off" class="btn btn-primary" role="button">Stream beenden</a>
+
+
+    {% else %}
+    <a id="cam-btn-on" href="/person_counter?camera=on" class="btn btn-primary" role="button">Stream einschalten</a>
+
+
+
+
+
+
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal"
+            data-whatever="Stream mit Zusatzinformationen einschalten">
+        Stream mit Zusatzinformationen einschalten
+    </button>
+
+    <!-- mit zusatzinfos starten als popup feld -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="exampleModalLabel">Zusatzinformationen</h4>
+                </div>
+                <form onsubmit="window.location = '/person_counter?camera=on&persons=' + number.value; return false;">
+                    <div class="modal-body">
+
+                        <label for="number" class="control-label">Personen im Geschäft:</label>
+                        <input id="number" class="form-control" type="number" min="0" max="1000" step="1"
+                               placeholder="Anzahl" required
+                               oninvalid=".setCustomValidity('Benutzername darf nicht leer sein')">
+
+                    </div>
+                    <div class="modal-footer">
+
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Schließen</button>
+                        <input class="btn btn-primary" type="submit" value="Stream mit Zusatzinformationen starten">
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
 
+    {% endif %}
+</div>
+
+
+<div>
+
+    {% if setting.stream_on %}
     <div class="container-fluid">
         <!-- Example row of columns -->
         <div class="row">
@@ -74,49 +186,84 @@
             </div>
         </div>
     </div>
-
-
+    {% endif %}
 </div>
-<!--
+
+
+<!-- Cards beschriften -->
 <script>
+{% if setting.stream_on %}
 
-        function requestData()
-        {
-            // Ajax call to get the Data from Flask
-            var requests = $.get('/personData');
+function request()
+{
 
-            var tm = requests.done(function (result)
-            {
+    $.get('/backgroundPersonCounter', function(data) {
+        $("#fps").text(data.currentFps.toFixed(2));
+        $("#person_total_in_business").text(data.currentAmountOfPersonInside);
+        $("#person_in").text(data.personsIn);
+        $("#person_out").text(data.personsOut);
 
+    })
+    setTimeout(request, 5000);
 
-                // Add the Point
-                // Time Temperature
-                // 0 = in 1 = out
-
-                var data1 = [];
-                data1.push(result[0]);
-                data1.push(result[1]);
-
+}
+request();
 
 
+{% endif %}
 
 
-                $(".sensor1").text("Rein: " +  data1[0] );
-                //$(".sensor2").text("Raus: " +  data1[1] );
 
 
-                // call it again after one second
-                setTimeout(requestData, 10000);
 
-            });
-        };
+
+
 
 
 
 
 
 </script>
--->
+
+<!-- Uhrzeit für time_card erstellen -->
+<script>
+
+    function time() {
+        var d = new Date();
+        var s = d.getSeconds();
+        var m = d.getMinutes();
+        var h = d.getHours();
+        $("#time_card").text(("0" + h).substr(-2) + ":" + ("0" + m).substr(-2) + ":" + ("0" + s).substr(-2));
+    }
+    setInterval(time, 1000);
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+<!-- popover bei mehr informationen -->
+<script>
+$('#exampleModal').on('show.bs.modal', function (event) {
+  var button = $(event.relatedTarget) // Button that triggered the modal
+  var recipient = button.data('whatever') // Extract info from data-* attributes
+  var modal = $(this)
+  modal.find('.modal-body input').val(recipient)
+})
+
+
+
+
+
+</script>
 
 <script>
         var chartTemperature;
@@ -204,6 +351,20 @@
 
 
         });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
