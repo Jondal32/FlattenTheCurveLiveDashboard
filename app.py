@@ -166,26 +166,6 @@ def distance_messurement():
     return render_template('distance_messurement.html', setting=setting)
 
 
-# Articles
-@app.route('/articles')
-def articles():
-    # Create cursor
-    cur = mysql.connection.cursor()
-
-    # Get articles
-    result = cur.execute("SELECT * FROM articles")
-
-    articles = cur.fetchall()
-
-    if result > 0:
-        return render_template('articles.html', articles=articles)
-    else:
-        msg = 'No Articles Found'
-        return render_template('articles.html', msg=msg)
-    # Close connection
-    cur.close()
-
-
 @app.route('/kontakt')
 def kontakt():
     return render_template('kontakt.html')
@@ -219,20 +199,6 @@ def analytics():
     )
 
     return render_template('analytics.html', setting=setting, piePlotsSettings=piePlotsSettings)
-
-
-# Single Article
-@app.route('/article/<string:id>/')
-def article(id):
-    # Create cursor
-    cur = mysql.connection.cursor()
-
-    # Get article
-    result = cur.execute("SELECT * FROM articles WHERE id = %s", [id])
-
-    article = cur.fetchone()
-
-    return render_template('article.html', article=article)
 
 
 # Register Form Class
@@ -346,7 +312,9 @@ def data():
     current_in = personCounterStream.get_TotalIn()
     current_out = personCounterStream.get_TotalOut()
 
-    data = [time2.strftime('%Y-%m-%d %H:%M:%S'), current_in, current_out]
+    #%Y-%m-%d , time2.strftime('%H:%M:%S')
+
+    data = [time() * 1000, current_in, current_out]
 
     response = make_response(json.dumps(data))
 
