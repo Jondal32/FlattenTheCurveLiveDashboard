@@ -1,10 +1,7 @@
 # flask
 from flask import flash, redirect, url_for, session, request, send_file
-
 from flask_mysqldb import MySQL
 from flask import Flask, render_template, make_response, Response
-
-import backgroundTasks
 
 app = Flask(__name__)
 # Config MySQL
@@ -15,12 +12,6 @@ app.config['MYSQL_DB'] = 'flask_dashboard'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 # init MYSQL
 mysql = MySQL(app)
-
-# core
-from core.stream import Stream
-from core.jetson_cam import camera
-from core.object_counter import Counter
-from core.detector import Detector
 
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
@@ -333,144 +324,19 @@ def logout():
     return redirect(url_for('login'))
 
 
-# Dashboard
-@app.route('/dashboard')
-@is_logged_in
-def dashboard():
-    # Create cursor
-    cur = mysql.connection.cursor()
-
-    # Get articles
-    # result = cur.execute("SELECT * FROM articles")
-    # Show articles only from the user logged in 
-    result = cur.execute("SELECT * FROM articles WHERE author = %s", [session['username']])
-
-    articles = cur.fetchall()
-
-    if result > 0:
-        return render_template('dashboard.html', articles=articles)
-    else:
-        msg = 'No Articles Found'
-        return render_template('dashboard.html', msg=msg)
-    # Close connection
-    cur.close()
-
-
-# Article Form Class
-class ArticleForm(Form):
-    title = StringField('Title', [validators.Length(min=1, max=200)])
-    body = TextAreaField('Body', [validators.Length(min=30)])
-
-
-# Add Article
-@app.route('/add_article', methods=['GET', 'POST'])
-@is_logged_in
-def add_article():
-    form = ArticleForm(request.form)
-    if request.method == 'POST' and form.validate():
-        title = form.title.data
-        body = form.body.data
-
-        # Create Cursor
-        cur = mysql.connection.cursor()
-
-        # Execute
-        cur.execute("INSERT INTO articles(title, body, author) VALUES(%s, %s, %s)", (title, body, session['username']))
-
-        # Commit to DB
-        mysql.connection.commit()
-
-        # Close connection
-        cur.close()
-
-        flash('Article Created', 'success')
-
-        return redirect(url_for('dashboard'))
-
-    return render_template('add_article.html', form=form)
-
-
-# Edit Article
-@app.route('/edit_article/<string:id>', methods=['GET', 'POST'])
-@is_logged_in
-def edit_article(id):
-    # Create cursor
-    cur = mysql.connection.cursor()
-
-    # Get article by id
-    result = cur.execute("SELECT * FROM articles WHERE id = %s", [id])
-
-    article = cur.fetchone()
-    cur.close()
-    # Get form
-    form = ArticleForm(request.form)
-
-    # Populate article form fields
-    form.title.data = article['title']
-    form.body.data = article['body']
-
-    if request.method == 'POST' and form.validate():
-        title = request.form['title']
-        body = request.form['body']
-
-        # Create Cursor
-        cur = mysql.connection.cursor()
-        app.logger.info(title)
-        # Execute
-        cur.execute("UPDATE articles SET title=%s, body=%s WHERE id=%s", (title, body, id))
-        # Commit to DB
-        mysql.connection.commit()
-
-        # Close connection
-        cur.close()
-
-        flash('Article Updated', 'success')
-
-        return redirect(url_for('dashboard'))
-
-    return render_template('edit_article.html', form=form)
-
-
-# Delete Article
-@app.route('/delete_article/<string:id>', methods=['POST'])
-@is_logged_in
-def delete_article(id):
-    # Create cursor
-    cur = mysql.connection.cursor()
-
-    # Execute
-    cur.execute("DELETE FROM articles WHERE id = %s", [id])
-
-    # Commit to DB
-    mysql.connection.commit()
-
-    # Close connection
-    cur.close()
-
-    flash('Article Deleted', 'success')
-
-    return redirect(url_for('dashboard'))
-
-
 @app.route('/datenschutz')
 def datenschutz():
     return render_template('datenschutz.html')
 
 
-@app.route('/video', methods=['GET', 'POST'])
-def video():
+@app.route('/mask_detection_video', methods=['GET', 'POST'])
+def mask_detection_video():
     return Response(maskStream.generateFrames(faceNet=faceNet, maskNet=maskNet),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
-    # return Response(generateFrames(faceNet, maskNet, camera_off), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/person_counter_video', methods=['GET', 'POST'])
 def person_counter_video():
-    # return Response(stream.gen_frames(),
-    #                mimetype='multipart/x-mixed-replace; boundary=frame')
-    global camera_off
-    # return Response(genFrames(),
-    #                mimetype='multipart/x-mixed-replace; boundary=frame')
     return Response(personCounterStream.generateFrames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
@@ -479,13 +345,6 @@ def person_counter_video():
 def data():
     current_in = personCounterStream.get_TotalIn()
     current_out = personCounterStream.get_TotalOut()
-
-    # cur = mysql.connection.cursor()
-    # cur.execute("INSERT INTO person_counter(timestamp, amount) VALUES (%s,%s)",
-    #            [time2.strftime('%Y-%m-%d %H:%M:%S'), current_in - current_out])
-
-    # mysql.connection.commit()
-    # cur.close()
 
     data = [time2.strftime('%Y-%m-%d %H:%M:%S'), current_in, current_out]
 
@@ -513,19 +372,6 @@ def mask_detection_pie_chart_data():
     data = [maskProportion, noMaskProportion]
 
     response = make_response(json.dumps(data))
-
-    response.content_type = 'application/json'
-
-    return response
-
-
-## wird nicht benutzt
-@app.route('/mask_detection_data', methods=["GET", "POST"])
-def mask_detection_data():
-    current_in = get_TotalIn()
-    current_out = get_TotalOut()
-
-    response = make_response(json.dumps(current_out))
 
     response.content_type = 'application/json'
 
@@ -576,36 +422,3 @@ if __name__ == '__main__':
 
     app.secret_key = 'secret123'
     app.run(debug=True)
-
-    """global detector
-    w, h = 640, 480
-
-
-
-    # load classess data
-    classesFile = "models/coco.json"
-    with open(classesFile) as json_labels:
-        classes = json.load(json_labels)
-
-    # initialize counter object
-    lines = []
-    lines.append([int(w * 0.50), 0, int(w * 0.50), h])  # LINE 0, x0, y0, x1, y1
-    #lines.append([int(w * 0.80), 0, int(w * 0.80), h])  # LINE 1, x0, y0, x1, y1
-    counter = Counter(classes, mode='line', lines=lines, threshDist=30)  # mode='line', 'area', 'multiline'
-
-    # initialize model
-    detector = Detector(counter, socketio, classes)
-    detector.generate_color_maps()
-    detector.load_model(model="models/ssd_mobilenet_v2_coco_2018_03_29/frozen_inference_graph.pb",
-                        config="models/ssd_mobilenet_v2_coco_2018_03_29/ssd_mobilenet_v2_coco_2018_03_29.pbtxt")
-
-    # initialize stream object
-    stream = Stream(camera(0, w, h), detector, counter, socketio, classes)
-
-    # initialize background task
-    socketio.start_background_task(target=detector.main)
-
-
-    # run flask-socketio
-    socketio.run(app, debug=True)
-    stream.close()"""

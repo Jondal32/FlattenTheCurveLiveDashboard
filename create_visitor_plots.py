@@ -1,6 +1,5 @@
 from flask import Response, Blueprint, send_file, make_response
 
-
 import io
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -71,18 +70,18 @@ def plot_visitor_overall():
 
 @plots.route('/plot_heatmap', methods=['GET', 'POST'])
 def plot_heatmap():
-    print("heatmap klappt vor figure")
-    figure = createDistanceMessurementHeatmap()
-    print("heatmap klappt")
-    #output = io.BytesIO()
-    #FigureCanvas(figure).print_png(output)
-    #return Response(output.getvalue(), mimetype='image/png')
-    canvas = FigureCanvas(figure)
-    output = io.BytesIO()
-    canvas.print_png(output)
-    response = make_response(output.getvalue())
-    response.mimetype = 'image/png'
-    return response
+    file_path = createDistanceMessurementHeatmap()
+
+    return send_file(file_path, mimetype='image/png')
+    # output = io.BytesIO()
+    # FigureCanvas(figure).print_png(output)
+    # return Response(output.getvalue(), mimetype='image/png')
+    # canvas = FigureCanvas(figure)
+    # output = io.BytesIO()
+    # canvas.print_png(output)
+    # response = make_response(output.getvalue())
+    # response.mimetype = 'image/png'
+    # return response
 
 
 def create_figure():
@@ -150,10 +149,10 @@ def get_daily_visitor():
 
 
 def createDistanceMessurementHeatmap():
-    img = plt.imread("static/img/pedastrians für heatmap.JPG")
+    img = plt.imread("static/img/imgHeatMapRAW.JPG")
     df = pd.read_csv("static/img/testdata.csv")
 
-    fig = Figure(dpi=100)
+    fig = Figure(dpi=300)
 
     ax = fig.add_subplot(1, 1, 1)
 
@@ -179,33 +178,6 @@ def createDistanceMessurementHeatmap():
     # plt.xlim(0,xmax)
     # ax.invert_yaxis()
     ax.set_axis_off()
-    return fig
-
-    """
-
-    fig, ax = plt.subplots()
-    ax.imshow(img)
-    ymin, ymax = ax.get_ylim()
-    xmin, xmax = ax.get_xlim()
-
-    # Create the heatmap
-    kde = sns.kdeplot(
-        x=df['x'],
-        y=df['y'],
-        shade=True,
-        thresh=0.05,
-        alpha=.4,
-        n_levels=10,
-        cmap='magma',
-        ax=ax
-    )
-
-    plt.ylim(0, ymin)
-    plt.xlim(0, xmax)
-    ax.invert_yaxis()
-    # ax.set_axis_off()
-    plt.close()
-
-    return fig
-    # fig.savefig("fig2.png", bbox_inches='tight', pad_inches=0)
-    """
+    file_path = "static/img/imgHeatMapFINAL.png"
+    fig.savefig(file_path, bbox_inches='tight', pad_inches=0)
+    return file_path

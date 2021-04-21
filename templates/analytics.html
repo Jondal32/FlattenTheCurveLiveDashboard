@@ -15,6 +15,8 @@
 </head>
 {% block body %}
 
+<!-- Besucherzahlen -->
+<div>
 <h1>Besucherzahlen</h1>
 
 <div class="tab">
@@ -80,6 +82,8 @@
 <br>
 <br>
 
+</div>
+
 <h1>Abstandskontrolle</h1>
 
 <div class="tab">
@@ -91,9 +95,12 @@
 <!-- heatmap -->
 <div id="heatMap" class="tabcontent">
     <h3>Bereiche mit gehäuften Abstandsunterschreitungen</h3>
+    <br>
 
+    <div>
+       <img id="heatMapImg" style="display: block" src="{{ url_for('plots.plot_heatmap') }}">
+    </div>
 
-    <img style="display: block" src="{{ url_for('plots.plot_heatmap') }}">
 
 
 </div>

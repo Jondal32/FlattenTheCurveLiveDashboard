@@ -21,6 +21,7 @@ myFmt = mdates.DateFormatter('%H:%M')
 backgroundTasks = Blueprint('backgroundTask', __name__, template_folder='templates')
 
 
+
 @backgroundTasks.route('/backgroundDistance', methods=["GET", "POST"])
 def backgroundDistance():
     return 0
