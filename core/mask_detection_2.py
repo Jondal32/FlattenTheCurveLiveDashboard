@@ -5,7 +5,6 @@ import numpy as np
 import cv2
 import imutils
 import time
-from webcamVideoStream import webcamVideoStream
 from datetime import datetime
 
 lock = threading.Lock()

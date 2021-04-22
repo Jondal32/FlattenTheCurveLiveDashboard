@@ -16,13 +16,8 @@ mysql = MySQL(app)
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
-from core.mask_detection_scripts import generateFrames
-from person_counter_scripts import generateFrames_PersonCounter
 from create_visitor_plots import *
 from create_pie_plots import *
-
-from core.person_counter_script import genFrames
-from core.person_counter_script import get_TotalIn, get_TotalOut
 from backgroundTasks import *
 
 ###
@@ -30,10 +25,8 @@ import threading
 
 from tensorflow.keras.models import load_model
 
-import time as time2
 import cv2
 import json
-from random import random
 
 from time import time
 
@@ -312,7 +305,7 @@ def data():
     current_in = personCounterStream.get_TotalIn()
     current_out = personCounterStream.get_TotalOut()
 
-    #%Y-%m-%d , time2.strftime('%H:%M:%S')
+    # %Y-%m-%d , time2.strftime('%H:%M:%S')
 
     data = [time() * 1000, current_in, current_out]
 

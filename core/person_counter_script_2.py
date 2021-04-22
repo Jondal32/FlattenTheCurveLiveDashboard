@@ -1,13 +1,6 @@
 import cv2
-
-import os
 import time
-import sys
 import numpy as np
-from matplotlib import pyplot as plt
-import imutils
-from imutils.video import VideoStream
-from imutils.video import FPS
 from scipy.spatial import distance as dist
 from collections import OrderedDict
 
@@ -36,6 +29,7 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 
 pbFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\models\ssd_mobilenet_v2_coco_2018_03_29\frozen_inference_graph.pb"
 pbtxtFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\models\ssd_mobilenet_v2_coco_2018_03_29\ssd_mobilenet_v2_coco_2018_03_29.pbtxt"
+
 
 modelName = "SSD Inception V2"
 
