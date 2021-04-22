@@ -281,8 +281,7 @@ $('#exampleModal').on('show.bs.modal', function (event) {
 
 
 
-                // Add the Point
-                // Time Temperature\
+
                 // rein = 1, raus = 2
                 var data1 = [];
                 data1.push(result[0]);
@@ -292,8 +291,6 @@ $('#exampleModal').on('show.bs.modal', function (event) {
 
 
                 chartTemperature.series[0].addPoint(data1, true, shiftTemperature);
-
-
 
 
 
@@ -324,16 +321,18 @@ $('#exampleModal').on('show.bs.modal', function (event) {
                     formatter: function() {
                         return Highcharts.dateFormat("%H:%M", this.value);
                     },
-                    tickPixelInterval: 150,
-                    maxZoom: 20 * 1000
+
+
                         },
                 yAxis: {
                     minPadding: 1,
                     title: {
                         text: 'Value',
-                        margin: 80
+
                             }
                          },
+
+
                 exporting: {
                     buttons: {
                         contextButton: {

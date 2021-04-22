@@ -84,6 +84,8 @@
 
 </div>
 
+<!-- Abstandskontrolle -->
+<div>
 <h1>Abstandskontrolle</h1>
 
 <div class="tab">
@@ -108,6 +110,7 @@
 
 <br>
 <br>
+    </div>
 
 <!-- Masken Analytics --->
 <div>
@@ -274,8 +277,8 @@ d3.csv(filename).then(function(loadedData) {
 
 
     g = new Dygraph(
-      document.getElementById("demodiv"),
-      "static/today.txt",
+      document.getElementById("demodivh"),
+      "static/ny-vs-sf.txt",
       {
         rollPeriod: 5,
         showRoller: true,
@@ -288,15 +291,22 @@ d3.csv(filename).then(function(loadedData) {
       }
     );
 
+</script>
 
 
-
-
-
-
-
-
-
+<script>
+    g = new Dygraph(
+      document.getElementById("demodiv"),
+      "ny-vs-sf.txt",
+      {
+        rollPeriod: 14,
+        showRoller: true,
+        customBars: true,
+        title: 'NYC vs. SF',
+        ylabel: 'Temperature (F)',
+        legend: 'always'
+      }
+    );
 </script>
 
 <!-- visitor plot -->

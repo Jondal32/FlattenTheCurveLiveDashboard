@@ -6,8 +6,8 @@ import json
 import datetime
 import numpy as np
 
-from tf_trt_detector import Detector
-from utils import Utils
+from outsourced.tf_trt_detector import Detector
+from outsourced.utils import Utils
 
 detector = Detector()
 utils = Utils()
