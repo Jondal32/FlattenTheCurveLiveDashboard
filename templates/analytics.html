@@ -17,100 +17,99 @@
 
 <!-- Besucherzahlen -->
 <div>
-<h1>Besucherzahlen</h1>
+    <h1>Besucherzahlen</h1>
 
-<div class="tab">
-    <button class="tablinks" onclick="openVisitorPlots(event, 'Heute')">Heute</button>
-    <button class="tablinks" onclick="openVisitorPlots(event, 'Gestern')">Gestern</button>
-    <button class="tablinks" onclick="openVisitorPlots(event, 'Woche')">7 Tage</button>
-    <button class="tablinks" onclick="openVisitorPlots(event, 'Gesamt')">Gesamt</button>
+    <div class="tab">
+        <button class="tablinks" onclick="openVisitorPlots(event, 'Heute')">Heute</button>
+        <button class="tablinks" onclick="openVisitorPlots(event, 'Gestern')">Gestern</button>
+        <button class="tablinks" onclick="openVisitorPlots(event, 'Woche')">7 Tage</button>
+        <button class="tablinks" onclick="openVisitorPlots(event, 'Gesamt')">Gesamt</button>
 
-</div>
+    </div>
 
-<!-- Tab content -->
-<div id="Heute" class="tabcontent">
-    <h3>Heute <span id="today"></span></h3>
+    <!-- Tab content -->
+    <div id="Heute" class="tabcontent">
+        <h3>Heute <span id="today"></span></h3>
 
-    {% if setting.todayAvailable %}
+        {% if setting.todayAvailable %}
+
+        <br>
+        <div id="demodiv" style="width:100%"></div>
+        <br>
+
+        <canvas id="myChart1"></canvas>
+
+        {% else %}
+
+        <h5>Für den heutigen Tag sind bisher noch keine Besucherzahlen erfasst worden.</h5>
+
+        {% endif %}
+
+        <!--<img style="display: block; text-align: center;" src="{{ url_for('plots.plot_visitor_today') }}" alt="my plot">-->
+
+
+    </div>
+
+    <div id="Gestern" class="tabcontent">
+        <h3>Gestern <span id="yesterday"></span></h3>
+
+        {% if setting.yesterdayAvailable %}
+
+        <img class="img_center"
+             src="{{ url_for('plots.plot_visitor_yesterday') }}" alt="my plot">
+
+        {% else %}
+
+        <h4>Für den gestrigen Tag sind keine Besucherzahlen erfasst worden.</h4>
+
+        {% endif %}
+
+
+    </div>
+
+    <div id="Woche" class="tabcontent">
+        <h3>Diese Woche <span id="7days"></span></h3>
+
+        <img style="display: block; text-align: center;" src="{{ url_for('plots.plot_visitor_week') }}" alt="my plot">
+    </div>
+
+
+    <div id="Gesamt" class="tabcontent">
+        <h3>Gesamt</h3>
+
+    </div>
 
     <br>
-    <div id="demodiv" style="width:100%"></div>
     <br>
-
-    <canvas id="myChart1"></canvas>
-
-    {% else %}
-
-    <h5>Für den heutigen Tag sind bisher noch keine Besucherzahlen erfasst worden.</h5>
-
-    {% endif %}
-
-    <!--<img style="display: block; text-align: center;" src="{{ url_for('plots.plot_visitor_today') }}" alt="my plot">-->
-
-
-</div>
-
-<div id="Gestern" class="tabcontent">
-    <h3>Gestern <span id="yesterday"></span></h3>
-
-    {% if setting.yesterdayAvailable %}
-
-    <img class="img_center"
-         src="{{ url_for('plots.plot_visitor_yesterday') }}" alt="my plot">
-
-    {% else %}
-
-    <h4>Für den gestrigen Tag sind keine Besucherzahlen erfasst worden.</h4>
-
-    {% endif %}
-
-
-</div>
-
-<div id="Woche" class="tabcontent">
-    <h3>Diese Woche <span id="7days"></span></h3>
-
-    <img style="display: block; text-align: center;" src="{{ url_for('plots.plot_visitor_week') }}" alt="my plot">
-</div>
-
-
-<div id="Gesamt" class="tabcontent">
-    <h3>Gesamt</h3>
-
-</div>
-
-<br>
-<br>
 
 </div>
 
 <!-- Abstandskontrolle -->
 <div>
-<h1>Abstandskontrolle</h1>
+    <h1>Abstandskontrolle</h1>
 
-<div class="tab">
-    <button class="tablinks" onclick="openVisitorPlots(event, 'heatMap')">Heat Map</button>
+    <div class="tab">
+        <button class="tablinks" onclick="openVisitorPlots(event, 'heatMap')">Heat Map</button>
 
 
-</div>
+    </div>
 
-<!-- heatmap -->
-<div id="heatMap" class="tabcontent">
-    <h3>Bereiche mit gehäuften Abstandsunterschreitungen</h3>
+    <!-- heatmap -->
+    <div id="heatMap" class="tabcontent">
+        <h3>Bereiche mit gehäuften Abstandsunterschreitungen</h3>
+        <br>
+
+        <div>
+            <img id="heatMapImg" style="display: block" src="{{ url_for('plots.plot_heatmap') }}">
+        </div>
+
+
+    </div>
+
+
     <br>
-
-    <div>
-       <img id="heatMapImg" style="display: block" src="{{ url_for('plots.plot_heatmap') }}">
-    </div>
-
-
-
+    <br>
 </div>
-
-
-<br>
-<br>
-    </div>
 
 <!-- Masken Analytics --->
 <div>
@@ -270,6 +269,7 @@ d3.csv(filename).then(function(loadedData) {
 
 
 
+
 </script>
 
 <!-- dygraph -->
@@ -291,6 +291,7 @@ d3.csv(filename).then(function(loadedData) {
       }
     );
 
+
 </script>
 
 
@@ -307,6 +308,7 @@ d3.csv(filename).then(function(loadedData) {
         legend: 'always'
       }
     );
+
 </script>
 
 <!-- visitor plot -->
@@ -360,6 +362,7 @@ document.getElementById("7days").innerHTML = dt_week.toLocaleDateString() + " - 
 document.getElementById("today1").innerHTML = dt.toLocaleDateString();
 document.getElementById("yesterday1").innerHTML = dt_yesterday.toLocaleDateString();
 document.getElementById("7days1").innerHTML = dt_week.toLocaleDateString() + " - " + dt.toLocaleDateString();
+
 
 
 
@@ -429,6 +432,7 @@ Highcharts.chart('pieChartToday', {
 
 
 
+
 </script>
 <!-- piechart yesterday -->
 <script>
@@ -483,6 +487,7 @@ Highcharts.chart('pieChartYesterday', {
                         }]
     }]
 });
+
 
 
 
@@ -553,6 +558,7 @@ Highcharts.chart('pieChartWeek', {
 
 
 
+
 </script>
 <!-- piechart total-->
 <script>
@@ -614,6 +620,19 @@ Highcharts.chart('pieChartTotal', {
 
 
 
+
+</script>
+
+<!-- heatmap img no cache -->
+
+<script>
+<!-- to prevent caching the heatmap image we add the current datetime to force a roload -->
+    var d = new Date();
+    document.getElementById("heatMapImg").src =
+      "{{ url_for('plots.plot_heatmap') }}?ver" +
+       d.getTime();
+</script>
+
 </script>
 
 <style>
@@ -668,6 +687,7 @@ Highcharts.chart('pieChartTotal', {
   justify-content: center;
   align-items: center;"
 }
+
 
 
 
