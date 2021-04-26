@@ -124,7 +124,7 @@
     </div>
 </div>
 
-<!-- On/Off Button -->
+<!-- On/Off Button + Zusatzinformationen -->
 <div>
     {% if setting.stream_on %}
     <a id="cam-btn-off" href="/person_counter?camera=off" class="btn btn-primary" role="button">Stream beenden</a>
@@ -152,13 +152,17 @@
                             aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title" id="exampleModalLabel">Zusatzinformationen</h4>
                 </div>
-                <form onsubmit="window.location = '/person_counter?camera=on&persons=' + number.value; return false;">
+                <form onsubmit="window.location = '/person_counter?camera=on&persons=' + number.value + '&threshold=' + threshold.value; return false;">
                     <div class="modal-body">
 
                         <label for="number" class="control-label">Personen im Geschäft:</label>
                         <input id="number" class="form-control" type="number" min="0" max="1000" step="1"
-                               placeholder="Anzahl" required
-                               oninvalid=".setCustomValidity('Benutzername darf nicht leer sein')">
+                               placeholder="Anzahl" required>
+                        <br>
+
+                        <label for="threshold" class="control-label">Vorhersagegenauigkeit:</label>
+                        <input id="threshold" class="form-control" type="number" min="0.1" max="0.9" step="0.1"
+                               placeholder="default=0.5 (&#x2259; 50%)" required>
 
                     </div>
                     <div class="modal-footer">

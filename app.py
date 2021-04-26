@@ -22,6 +22,7 @@ from backgroundTasks import *
 
 ###
 import threading
+import time as clock
 
 from tensorflow.keras.models import load_model
 
@@ -122,6 +123,7 @@ def maskdetection():
 def person_counter():
     camera = request.args.get("camera")
     predefined_person_count = request.args.get("persons")
+    threshold = request.args.get("threshold")
 
     if camera is not None and camera == 'off' and personCounterStream.status() == True:
         personCounterStream.close()
@@ -129,6 +131,10 @@ def person_counter():
     elif camera is not None and camera == 'on' and personCounterStream.status() == False:
         if predefined_person_count is not None:
             personCounterStream.totalIn = int(predefined_person_count)
+            personCounterStream.totalOut = 0
+
+        if threshold is not None:
+            personCounterStream.minConfidence = float(threshold.replace(',', '.'))
         personCounterStream.open()
         flash("Stream erfolgreich gestartet", "success")
 
@@ -174,10 +180,7 @@ def analytics():
         yesterdayAvailable=True,
     )
 
-    PieChartData.createPieChartDataToday()
-    PieChartData.createPieChartDataYesterday()
-    PieChartData.createPieChartDataWeek()
-    PieChartData.createPieChartDataTotal()
+    PieChartData.createAllCharts()
 
     piePlotsSettings = dict(
         todayAvailable=PieChartData.dataToday if not None else False,
@@ -309,6 +312,13 @@ def data():
 
     data = [time() * 1000, current_in, current_out]
 
+    cur = mysql.connection.cursor()
+    cur.execute("INSERT INTO person_counter(timestamp, amount) VALUES (%s,%s)",
+                [clock.strftime('%Y-%m-%d %H:%M:%S'), current_in - current_out])
+
+    mysql.connection.commit()
+    cur.close()
+
     response = make_response(json.dumps(data))
 
     response.content_type = 'application/json'
@@ -377,6 +387,7 @@ def backgroundDistance():
 
 
 if __name__ == '__main__':
+    ##jetson_cam = "nvarguscamerasrc ! video/x-raw(memory:NVMM), width=(int)1920, height=(int)1080, format=(string)NV12, framerate=(fraction)30/1 ! nvvidconv flip-method=2 ! video/x-raw, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink"
     maskStream = mask_stream(camera_src=0)
     personCounterStream = person_counter_stream()
     PieChartData = PieChartData()

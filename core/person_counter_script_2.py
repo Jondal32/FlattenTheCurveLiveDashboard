@@ -31,7 +31,7 @@ pbFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\models\ss
 pbtxtFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\models\ssd_mobilenet_v2_coco_2018_03_29\ssd_mobilenet_v2_coco_2018_03_29.pbtxt"
 
 
-modelName = "SSD Inception V2"
+modelName = "MobileNetV2"
 
 # cv2.dnn.writeTextGraph(pbFile, 'graph.pbtxt')
 
@@ -267,6 +267,7 @@ class Stream:
         self.totalIn = 0
         self.totalOut = 0
         self.totalPersonsInside = 0
+        self.minConfidence = 0.5
 
         self.limitIn = None
         self.limitOut = None
@@ -310,7 +311,7 @@ class Stream:
             confidence = float(detection[2])
 
             # if the confidence is above a threshold
-            if confidence > minConfidence:
+            if confidence > self.minConfidence:
                 classID = detection[1]
 
                 # proceed only if the object detected is indeed a human

@@ -28,10 +28,10 @@ def plot_visitor_today():
         data = get_daily_visitor()
         # print(type(data))
         df = pd.DataFrame(data)
-        print(df.dtypes)
+        #print(df.dtypes)
         df_cut = df[["timestamp", "amount"]].to_csv('csv/today.csv', date_format='%Y/%m/%d %H:%M:%S', index=False)
         # date_format = '%H:%M:%S'
-        print(type(df_cut))
+        #print(type(df_cut))
 
         return Response(df_cut, mimetype='text/csv')
         # return send_file("csv/today.csv", mimetype='text/csv')
@@ -72,15 +72,7 @@ def plot_heatmap():
     file_path = createDistanceMessurementHeatmap()
 
     return send_file(file_path, mimetype='image/png')
-    # output = io.BytesIO()
-    # FigureCanvas(figure).print_png(output)
-    # return Response(output.getvalue(), mimetype='image/png')
-    # canvas = FigureCanvas(figure)
-    # output = io.BytesIO()
-    # canvas.print_png(output)
-    # response = make_response(output.getvalue())
-    # response.mimetype = 'image/png'
-    # return response
+
 
 
 def create_figure():
@@ -157,7 +149,7 @@ def createDistanceMessurementHeatmap():
 
     ymin, ymax = ax.get_ylim()
     xmin, xmax = ax.get_xlim()
-    print(xmax, ymin)
+    #print(xmax, ymin)
 
     # Create the heatmap
     kde = sns.kdeplot(

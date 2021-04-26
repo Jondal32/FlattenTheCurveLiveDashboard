@@ -119,3 +119,10 @@ class PieChartData:
 
         except ValueError:
             print("Value Error beim speichern vom pie chart!")
+
+    def createAllCharts(self):
+        self.createPieChartDataToday()
+        self.createPieChartDataYesterday()
+        self.createPieChartDataWeek()
+        self.createPieChartDataTotal()
+
