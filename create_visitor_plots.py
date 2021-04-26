@@ -189,20 +189,20 @@ def getVisitorData():
     """
     results = []
 
-    queries = ["SELECT AVG(amount) as avg_total from person_counter",
-               "SELECT AVG(amount)  as avg_daily FROM person_counter WHERE timestamp = CURDATE()",
-               "SELECT AVG(amount) as avg_yesterday FROM person_counter WHERE timestamp <= CURDATE() AND timestamp >= CURDATE() - "
+    queries = ["SELECT ROUND(AVG(amount),1) as avg_total from person_counter",
+               "SELECT ROUND(AVG(amount),1)  as avg_daily FROM person_counter WHERE timestamp = CURDATE()",
+               "SELECT ROUND(AVG(amount),1) as avg_yesterday FROM person_counter WHERE timestamp <= CURDATE() AND timestamp >= CURDATE() - "
                "INTERVAL 1 DAY ",
-               "SELECT AVG(amount) as avg_week FROM person_counter WHERE timestamp <= CURDATE() AND timestamp >= CURDATE() - "
+               "SELECT ROUND(AVG(amount),1) as avg_week FROM person_counter WHERE timestamp <= CURDATE() AND timestamp >= CURDATE() - "
                "INTERVAL 7 DAY ",
                "SELECT TIMESTAMPDIFF(Minute, Min(timestamp), Max(timestamp)) as range_today FROM (SELECT * FROM "
                "person_counter WHERE timestamp = CURDATE()) as dt",
                "SELECT TIMESTAMPDIFF(Minute, Min(timestamp), Max(timestamp)) as range_yesterday FROM(SELECT * FROM person_counter WHERE "
                "timestamp >= CURDATE() - INTERVAL 1 DAY) as dt",
-               "SELECT max(amount) as max_persons_today, timestamp from person_counter WHERE timestamp = CURDATE()",
-               "SELECT max(amount) as max_persons_yesterday, timestamp from person_counter WHERE timestamp <= CURDATE() AND "
+               "SELECT max(amount) as max_persons_today, DATE_FORMAT(timestamp, '%e-%m %H:%i') as timestamp from person_counter WHERE timestamp = CURDATE()",
+               "SELECT max(amount) as max_persons_yesterday, DATE_FORMAT(timestamp, '%e-%m %H:%i') as timestamp from person_counter WHERE timestamp <= CURDATE() AND "
                "timestamp >= CURDATE() - INTERVAL 1 DAY",
-               "SELECT max(amount) as max_persons_week, timestamp from person_counter WHERE timestamp <= CURDATE() AND "
+               "SELECT max(amount) as max_persons_week, DATE_FORMAT(timestamp, '%e-%m %H:%i') as timestamp from person_counter WHERE timestamp <= CURDATE() AND "
                "timestamp >= CURDATE() - INTERVAL 7 DAY "
                ]
 
@@ -210,7 +210,5 @@ def getVisitorData():
         cur.execute(query)
         result = cur.fetchall()
         results.append(result)
-    print(results)
-    print(results[0][0]["avg_total"])
-    print(type(results[0][0]["avg_total"]))
+
     return results

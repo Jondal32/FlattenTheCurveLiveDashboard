@@ -29,60 +29,130 @@
 
     <!-- Tab content -->
     <div id="Heute" class="tabcontent">
-        <h3>Heute <span id="today"></span></h3>
-        <br>
+        <h3>Statistiken</h3>
 
-        <div class="container">
+        <div>
+            <!-- erste Reihe von Cards , durchschnittliche Besucher -->
             <div class="row">
                 <div class="col-md-3">
-                    <div class="card-counter primary">
-                        <i class="fa fa-code-fork"></i>
-                        <span class="count-numbers">12</span>
-                        <span class="count-name">Flowz</span>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card-counter danger">
-                        <i class="fa fa-ticket"></i>
-                        <span class="count-numbers">599</span>
-                        <span class="count-name">Instances</span>
-                    </div>
-                </div>
-
-                <div class="col-md-3">
-                    <div class="card-counter success">
-                        <i class="fa fa-database"></i>
-                        <span class="count-numbers">6875</span>
-                        <span class="count-name">Data</span>
+                    <div class="card-counter info">
+                        {% if visitorSettings.avg_daily_available %}
+                        <span class="count-numbers">{{ visitorSettings.avg_daily }}</span>
+                        {% else %}
+                        <span class="count-numbers">-</span>
+                        {% endif %}
+                        <span class="count-name">&Oslash; - Personen im Geschäft (Heute)</span>
                     </div>
                 </div>
 
                 <div class="col-md-3">
                     <div class="card-counter info">
-                        <i class="fa fa-users"></i>
-                        <span class="count-numbers">35</span>
-                        <span class="count-name">Users</span>
+                        {% if visitorSettings.avg_yesterday_available %}
+                        <span class="count-numbers">{{ visitorSettings.avg_yesterday }}</span>
+                        {% else %}
+                        <span class="count-numbers">-</span>
+                        {% endif %}
+                        <span class="count-name">&Oslash; - Personen im Geschäft (Gestern)</span>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card-counter info">
+                        {% if visitorSettings.avg_week_available %}
+                        <span class="count-numbers">{{ visitorSettings.avg_week }}</span>
+                        {% else %}
+                        <span class="count-numbers">-</span>
+                        {% endif %}
+                        <span class="count-name">&Oslash; - Personen im Geschäft (Woche)</span>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card-counter info">
+                        {% if visitorSettings.avg_total_available %}
+                        <span class="count-numbers">{{ visitorSettings.avg_total }}</span>
+                        {% else %}
+                        <span class="count-numbers">-</span>
+                        {% endif %}
+                        <span class="count-name">&Oslash; - Personen im Geschäft (Gesamt)</span>
                     </div>
                 </div>
             </div>
+            <!-- zweite Reihe Cards -->
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card-counter info">
+                        {% if visitorSettings.max_persons_today_available %}
+                        <span class="count-numbers">{{ visitorSettings.max_persons_today }}</span>
+                        <span class="count-name">höchste Besucherzahl (Heute)<br>{{ visitorSettings.max_persons_today_timestamp }}</span>
+                        {% else %}
+                        <span class="count-numbers">-</span>
+                        <span class="count-name">höchste Besucherzahl (Heute)</span>
+                        {% endif %}
+
+
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card-counter info">
+                        {% if visitorSettings.max_persons_yesterday_available %}
+                        <span class="count-numbers">{{ visitorSettings.max_persons_yesterday }}</span>
+                        <span class="count-name">höchste Besucherzahl (Gestern)<br>{{ visitorSettings.max_persons_yesterday_timestamp }}</span>
+                        {% else %}
+                        <span class="count-numbers">-</span>
+                        <span class="count-name">höchste Besucherzahl (Gestern)</span>
+                        {% endif %}
+
+                    </div>
+                </div>
+
+                <div class="col-md-3 offset-md-3">
+                    <div class="card-counter info">
+                        {% if visitorSettings.max_persons_week_available %}
+                        <span class="count-numbers">{{ visitorSettings.max_persons_week }}</span>
+                        <span class="count-name">höchste Besucherzahl (Woche)<br>{{ visitorSettings.max_persons_week_timestamp }}</span>
+                        {% else %}
+                        <span class="count-numbers">-</span>
+                        <span class="count-name">höchste Besucherzahl (Woche)</span>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- dritte Reihe Cards -->
+
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card-counter info">
+                        {% if visitorSettings.range_today_available %}
+                        <span class="count-numbers">{{ visitorSettings.range_today }}Min</span>
+                        {% else %}
+                        <span class="count-numbers">-</span>
+                        {% endif %}
+
+                        <span class="count-name">überwachter Zeitraum (Heute)</span>
+                    </div>
+                </div>
+
+                <div class="col-md-3 offset-md-6">
+                    <div class="card-counter info">
+                        {% if visitorSettings.range_yesterday_available %}
+                        <span class="count-numbers">{{ visitorSettings.range_yesterday }}Min</span>
+                        {% else %}
+                        <span class="count-numbers">-</span>
+                        {% endif %}
+                        <span class="count-name">überwachter Zeitraum (Gestern)</span>
+                    </div>
+                </div>
+
+
+            </div>
         </div>
-
-        {% if setting.todayAvailable %}
-
-        <br>
-        <div id="demodiv" style="width:100%"></div>
-        <br>
-
-        <canvas id="myChart1"></canvas>
-
-        {% else %}
-
-        <h5>Für den heutigen Tag sind bisher noch keine Besucherzahlen erfasst worden.</h5>
-
-        {% endif %}
-
-        <!--<img style="display: block; text-align: center;" src="{{ url_for('plots.plot_visitor_today') }}" alt="my plot">-->
 
 
     </div>
@@ -308,6 +378,8 @@ d3.csv(filename).then(function(loadedData) {
 
 
 
+
+
 </script>
 
 <!-- dygraph -->
@@ -331,6 +403,8 @@ d3.csv(filename).then(function(loadedData) {
 
 
 
+
+
 </script>
 
 
@@ -347,6 +421,8 @@ d3.csv(filename).then(function(loadedData) {
         legend: 'always'
       }
     );
+
+
 
 
 </script>
@@ -402,6 +478,8 @@ document.getElementById("7days").innerHTML = dt_week.toLocaleDateString() + " - 
 document.getElementById("today1").innerHTML = dt.toLocaleDateString();
 document.getElementById("yesterday1").innerHTML = dt_yesterday.toLocaleDateString();
 document.getElementById("7days1").innerHTML = dt_week.toLocaleDateString() + " - " + dt.toLocaleDateString();
+
+
 
 
 
@@ -475,6 +553,8 @@ Highcharts.chart('pieChartToday', {
 
 
 
+
+
 </script>
 <!-- piechart yesterday -->
 <script>
@@ -529,6 +609,8 @@ Highcharts.chart('pieChartYesterday', {
                         }]
     }]
 });
+
+
 
 
 
@@ -603,6 +685,8 @@ Highcharts.chart('pieChartWeek', {
 
 
 
+
+
 </script>
 <!-- piechart total-->
 <script>
@@ -666,6 +750,8 @@ Highcharts.chart('pieChartTotal', {
 
 
 
+
+
 </script>
 
 <!-- heatmap img no cache -->
@@ -676,6 +762,8 @@ Highcharts.chart('pieChartTotal', {
     document.getElementById("heatMapImg").src =
       "{{ url_for('plots.plot_heatmap') }}?ver" +
        d.getTime();
+
+
 
 </script>
 
@@ -748,25 +836,6 @@ Highcharts.chart('pieChartTotal', {
     transition: .3s linear all;
   }
 
-  .card-counter:hover{
-    box-shadow: 4px 4px 20px #DADADA;
-    transition: .3s linear all;
-  }
-
-  .card-counter.primary{
-    background-color: #007bff;
-    color: #FFF;
-  }
-
-  .card-counter.danger{
-    background-color: #ef5350;
-    color: #FFF;
-  }
-
-  .card-counter.success{
-    background-color: #66bb6a;
-    color: #FFF;
-  }
 
   .card-counter.info{
     background-color: #26c6da;
@@ -781,20 +850,19 @@ Highcharts.chart('pieChartTotal', {
   .card-counter .count-numbers{
     position: absolute;
     right: 35px;
-    top: 20px;
+    top: 50px;
     font-size: 32px;
     display: block;
   }
 
   .card-counter .count-name{
-    position: absolute;
     right: 35px;
     top: 65px;
     font-style: italic;
     text-transform: capitalize;
-    opacity: 0.5;
+    opacity: 0.65;
     display: block;
-    font-size: 18px;
+    font-size: 15px;
   }
 
 

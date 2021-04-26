@@ -26,10 +26,10 @@
             <ul class="nav navbar-nav navbar-right">
                 {% if session.logged_in %}
                 <!--<li><a href="/dashboard">Dashboard</a></li>--->
-                <li><a href="/logout">Logout</a></li>
+                <li><a href="/logout">Logout <span class="oi oi-account-logout"></span></a></li>
                 {% else %}
                 <li><a href="/register">Registrierung</a></li>
-                <li><a href="/login">Login</a></li>
+                <li><a href="/login">Login <span class="oi oi-account-login"></span></a></li>
                 {% endif %}
 
             </ul>
