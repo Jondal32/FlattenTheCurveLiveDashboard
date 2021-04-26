@@ -174,27 +174,28 @@ def kontakt():
 @is_logged_in
 @check_rights
 def analytics():
-    plot_visitor_today()
+    """Sql-Abfragen zu Besucherzahlen, dessen Daten zu einem dictionary zusammengefasst werden"""
+    results = getVisitorData()
+    visitorSettings = createDictFromVisitorDataList(results)
+
+
+    #plot_visitor_today()
     setting = dict(
-        todayAvailable=True,
+        todayAvailable=False,
         yesterdayAvailable=True,
     )
 
     PieChartData.createAllCharts()
 
-    piePlotsSettings = dict(
-        todayAvailable=PieChartData.dataToday if not None else False,
-        yesterdayAvailable=PieChartData.dataYesterday if not None else False,
-        weekAvailable=PieChartData.dataWeek if not None else False,
-        totalAvailable=PieChartData.dataTotal if not None else False,
+    piePlotsSettings = {'todayAvailable': PieChartData.dataToday if not None else False,
+                        'yesterdayAvailable': PieChartData.dataYesterday if not None else False,
+                        'weekAvailable': PieChartData.dataWeek if not None else False,
+                        'totalAvailable': PieChartData.dataTotal if not None else False,
+                        'pieChartDataToday': PieChartData.dataToday,
+                        'pieChartDataYesterday': PieChartData.dataYesterday, 'pieChartDataWeek': PieChartData.dataWeek,
+                        'pieChartDataTotal': PieChartData.dataTotal}
 
-        pieChartDataToday=PieChartData.dataToday,
-        pieChartDataYesterday=PieChartData.dataYesterday,
-        pieChartDataWeek=PieChartData.dataWeek,
-        pieChartDataTotal=PieChartData.dataTotal
-    )
-
-    return render_template('analytics.html', setting=setting, piePlotsSettings=piePlotsSettings)
+    return render_template('analytics.html', setting=setting, piePlotsSettings=piePlotsSettings, visitorSettings=visitorSettings)
 
 
 # Register Form Class
@@ -288,6 +289,7 @@ def logout():
 
 @app.route('/datenschutz')
 def datenschutz():
+    getVisitorData()
     return render_template('datenschutz.html')
 
 

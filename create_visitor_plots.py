@@ -28,10 +28,10 @@ def plot_visitor_today():
         data = get_daily_visitor()
         # print(type(data))
         df = pd.DataFrame(data)
-        #print(df.dtypes)
+        # print(df.dtypes)
         df_cut = df[["timestamp", "amount"]].to_csv('csv/today.csv', date_format='%Y/%m/%d %H:%M:%S', index=False)
         # date_format = '%H:%M:%S'
-        #print(type(df_cut))
+        # print(type(df_cut))
 
         return Response(df_cut, mimetype='text/csv')
         # return send_file("csv/today.csv", mimetype='text/csv')
@@ -72,7 +72,6 @@ def plot_heatmap():
     file_path = createDistanceMessurementHeatmap()
 
     return send_file(file_path, mimetype='image/png')
-
 
 
 def create_figure():
@@ -149,7 +148,7 @@ def createDistanceMessurementHeatmap():
 
     ymin, ymax = ax.get_ylim()
     xmin, xmax = ax.get_xlim()
-    #print(xmax, ymin)
+    # print(xmax, ymin)
 
     # Create the heatmap
     kde = sns.kdeplot(
@@ -172,3 +171,46 @@ def createDistanceMessurementHeatmap():
     file_path = "static/img/imgHeatMapFINAL.png"
     fig.savefig(file_path, bbox_inches='tight', pad_inches=0)
     return file_path
+
+
+def getVisitorData():
+    cur = mysql.connection.cursor()
+    """
+    1. Abfrage: durchschnittliche Personen im Laden (gesamter Zeitraum)
+    2. Abfrage: durchschnittliche Personen im Laden (Heute)
+    3. Abfrage: durchschnittliche Personen im Laden (Gestern)
+    4. Abfrage: durchschnittliche Personen im Laden (Woche)
+    5. Abfrage: überwachter Zeitraum (Heute)
+    6. Abfrage: überwachter Zeitraum (Gestern)
+    7. Abfrage: höchste Besucherzahl (Heute)
+    8. Abfrage: höchste Besucherzahl (Gestern)
+    9. Abfrage: höchste Besucherzahl (Woche)
+    
+    """
+    results = []
+
+    queries = ["SELECT AVG(amount) as avg_total from person_counter",
+               "SELECT AVG(amount)  as avg_daily FROM person_counter WHERE timestamp = CURDATE()",
+               "SELECT AVG(amount) as avg_yesterday FROM person_counter WHERE timestamp <= CURDATE() AND timestamp >= CURDATE() - "
+               "INTERVAL 1 DAY ",
+               "SELECT AVG(amount) as avg_week FROM person_counter WHERE timestamp <= CURDATE() AND timestamp >= CURDATE() - "
+               "INTERVAL 7 DAY ",
+               "SELECT TIMESTAMPDIFF(Minute, Min(timestamp), Max(timestamp)) as range_today FROM (SELECT * FROM "
+               "person_counter WHERE timestamp = CURDATE()) as dt",
+               "SELECT TIMESTAMPDIFF(Minute, Min(timestamp), Max(timestamp)) as range_yesterday FROM(SELECT * FROM person_counter WHERE "
+               "timestamp >= CURDATE() - INTERVAL 1 DAY) as dt",
+               "SELECT max(amount) as max_persons_today, timestamp from person_counter WHERE timestamp = CURDATE()",
+               "SELECT max(amount) as max_persons_yesterday, timestamp from person_counter WHERE timestamp <= CURDATE() AND "
+               "timestamp >= CURDATE() - INTERVAL 1 DAY",
+               "SELECT max(amount) as max_persons_week, timestamp from person_counter WHERE timestamp <= CURDATE() AND "
+               "timestamp >= CURDATE() - INTERVAL 7 DAY "
+               ]
+
+    for query in queries:
+        cur.execute(query)
+        result = cur.fetchall()
+        results.append(result)
+    print(results)
+    print(results[0][0]["avg_total"])
+    print(type(results[0][0]["avg_total"]))
+    return results

@@ -94,7 +94,22 @@ class Stream:
             savePieChartData(self.maskFrames, self.noMaskFrames)
 
     def open(self):
-        self.camera = cv2.VideoCapture(self.camera_src)  # webcamVideoStream(src=self.camera_src).start()
+        """## für den jetson
+
+        width = 1920
+        height = 1080
+
+        gst_str = ('nvarguscamerasrc ! ' + 'video/x-raw(memory:NVMM), ' +
+                   'width=(int)1920, height=(int)1080, ' +
+                   'format=(string)NV12, framerate=(fraction)30/1 ! ' +
+                   'nvvidconv flip-method=2 ! ' +
+                   'video/x-raw, width=(int){}, height=(int){}, ' +
+                   'format=(string)BGRx ! ' +
+                   'videoconvert ! appsink').format(width, height) """
+
+
+
+        self.camera = cv2.VideoCapture(self.camera_src)  #,cv2.CAP_GSTREAMER# webcamVideoStream(src=self.camera_src).start()
 
     def status(self):
         return self.camera is not None
@@ -111,7 +126,7 @@ class Stream:
                 if not ret:
                     break
 
-                frame = imutils.resize(frame, width=600)
+                #frame = imutils.resize(frame, width=600)
 
                 # detect faces in the frame and determine if they are wearing a
                 # face mask or not
