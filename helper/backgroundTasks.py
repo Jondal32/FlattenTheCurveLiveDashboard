@@ -31,10 +31,10 @@ def createDictFromVisitorDataList(results):
     avg_week = results[3][0]["avg_week"]
     range_today = results[4][0]["range_today"]
     range_yesterday = results[5][0]["range_yesterday"]
-    max_persons_today, max_person_today_timestamp = results[6][0]["max_persons_today"], results[6][0]["timestamp"]
+    max_persons_today, max_person_today_timestamp = results[6][0]["max_persons_today"], results[6][0]["timestamp_modi"]
     max_persons_yesterday, max_persons_yesterday_timestamp = results[7][0]["max_persons_yesterday"], results[7][0][
-        "timestamp"]
-    max_persons_week, max_persons_week_timestamp = results[8][0]["max_persons_week"], results[8][0]["timestamp"]
+        "timestamp_modi"]
+    max_persons_week, max_persons_week_timestamp = results[8][0]["max_persons_week"], results[8][0]["timestamp_modi"]
 
 
 
@@ -53,5 +53,6 @@ def createDictFromVisitorDataList(results):
                        'max_persons_week': max_persons_week, 'max_persons_today_timestamp': max_person_today_timestamp,
                        'max_persons_yesterday_timestamp': max_persons_yesterday_timestamp,
                        'max_persons_week_timestamp': max_persons_week_timestamp}
+
 
     return visitorSettings

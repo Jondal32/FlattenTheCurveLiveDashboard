@@ -123,7 +123,7 @@
                 <div class="col-md-3">
                     <div class="card-counter info">
                         {% if visitorSettings.range_today_available %}
-                        <span class="count-numbers">{{ visitorSettings.range_today }}Min</span>
+                        <span class="count-numbers">{{ visitorSettings.range_today }}<span style="font-size: 20px">Min</span></span>
                         {% else %}
                         <span class="count-numbers">-</span>
                         {% endif %}
@@ -614,6 +614,8 @@ Highcharts.chart('pieChartTotal', {
     font-size: 32px;
     display: block;
   }
+
+
 
   .card-counter .count-name{
     right: 35px;
