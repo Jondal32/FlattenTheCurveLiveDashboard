@@ -1,7 +1,7 @@
 # flask
-from flask import flash, redirect, url_for, session, request, send_file
+from flask import flash, redirect, url_for, session, request
 from flask_mysqldb import MySQL
-from flask import Flask, render_template, make_response, Response
+from flask import Flask, render_template
 
 app = Flask(__name__)
 # Config MySQL
@@ -13,12 +13,13 @@ app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 # init MYSQL
 mysql = MySQL(app)
 
-from wtforms import Form, StringField, TextAreaField, PasswordField, validators
+from wtforms import Form, StringField, PasswordField, validators
 from passlib.hash import sha256_crypt
 from functools import wraps
-from create_visitor_plots import *
-from create_pie_plots import *
-from backgroundTasks import *
+from helper.plot_creater import *
+from helper.create_pie_plots import *
+from helper.backgroundTasks import *
+
 
 ###
 import threading
@@ -31,11 +32,7 @@ import json
 
 from time import time
 
-outputFrame = None
 lock = threading.Lock()
-
-###
-
 
 app.register_blueprint(plots)
 app.register_blueprint(piePlots)
@@ -44,11 +41,8 @@ app.register_blueprint(backgroundTasks)
 prototxtPath = 'models/face_detector/deploy.prototxt'
 weightsPath = 'models/face_detector/res10_300x300_ssd_iter_140000.caffemodel'
 faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
-
-# faceNet.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-# faceNet.setPreferableTarget(cv2.dnn. DNN_TARGET_CUDA) #or cv2.dnn.DNN_TARGET_CUDA_FP16
-
 maskNet = load_model('models/face_detection_mobilenetv2')
+
 from core.mask_detection_2 import Stream as mask_stream
 from core.person_counter_script_2 import Stream as person_counter_stream
 
@@ -178,8 +172,7 @@ def analytics():
     results = getVisitorData()
     visitorSettings = createDictFromVisitorDataList(results)
 
-
-    #plot_visitor_today()
+    # plot_visitor_today()
     setting = dict(
         todayAvailable=False,
         yesterdayAvailable=True,
@@ -195,7 +188,8 @@ def analytics():
                         'pieChartDataYesterday': PieChartData.dataYesterday, 'pieChartDataWeek': PieChartData.dataWeek,
                         'pieChartDataTotal': PieChartData.dataTotal}
 
-    return render_template('analytics.html', setting=setting, piePlotsSettings=piePlotsSettings, visitorSettings=visitorSettings)
+    return render_template('analytics.html', setting=setting, piePlotsSettings=piePlotsSettings,
+                           visitorSettings=visitorSettings)
 
 
 # Register Form Class
