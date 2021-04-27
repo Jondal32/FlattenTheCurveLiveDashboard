@@ -1,7 +1,6 @@
 .card-header {
-    padding: .25rem 1.25rem !important;
 
-
+ padding: .25rem 1.25rem !important;
 
 }
 
@@ -11,8 +10,10 @@
 }
 
 .card {
-    border-radius: 25px;
-    border: 1px solid black;
+    border-radius: 10px;
+    border: 1px solid white;
+    background-color: #eee;
+
 }
 
 .tabcontent {

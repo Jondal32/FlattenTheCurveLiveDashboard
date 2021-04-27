@@ -56,3 +56,16 @@ def createDictFromVisitorDataList(results):
 
 
     return visitorSettings
+
+
+def createDictFromMaskDetectionData(PieChartData):
+
+    piePlotsSettings = {'todayAvailable': PieChartData.dataToday if not None else False,
+                        'yesterdayAvailable': PieChartData.dataYesterday if not None else False,
+                        'weekAvailable': PieChartData.dataWeek if not None else False,
+                        'totalAvailable': PieChartData.dataTotal if not None else False,
+                        'pieChartDataToday': PieChartData.dataToday,
+                        'pieChartDataYesterday': PieChartData.dataYesterday, 'pieChartDataWeek': PieChartData.dataWeek,
+                        'pieChartDataTotal': PieChartData.dataTotal}
+
+    return piePlotsSettings
