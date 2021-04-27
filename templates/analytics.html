@@ -2,6 +2,7 @@
 <head>
     <script type="text/javascript" src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
     <script type="text/javascript" src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 
     <!--High CHART LIVE  -->
     <script src="http://code.highcharts.com/highcharts.js"></script>
@@ -20,19 +21,15 @@
     <h1>Besucherzahlen</h1>
 
     <div class="tab">
-        <button class="tablinks" onclick="openVisitorPlots(event, 'Heute')">Heute</button>
-        <button class="tablinks" onclick="openVisitorPlots(event, 'Gestern')">Gestern</button>
-        <button class="tablinks" onclick="openVisitorPlots(event, 'Woche')">7 Tage</button>
-        <button class="tablinks" onclick="openVisitorPlots(event, 'Gesamt')">Gesamt</button>
-
+        <button class="tablinks" target="_visitor">Übersicht</button>
     </div>
 
-    <!-- Tab content -->
-    <div id="Heute" class="tabcontent">
+
+    <div id="div_visitor" class="tabcontent">
         <h3>Statistiken</h3>
 
         <div>
-            <!-- erste Reihe von Cards , durchschnittliche Besucher -->
+            <!-- erste Reihe; durchschnittliche Besucher -->
             <div class="row">
                 <div class="col-md-3">
                     <div class="card-counter info">
@@ -78,7 +75,7 @@
                     </div>
                 </div>
             </div>
-            <!-- zweite Reihe Cards -->
+            <!-- zweite Reihe; Besucherhöchstzahlen  -->
 
             <div class="row">
                 <div class="col-md-3">
@@ -90,8 +87,6 @@
                         <span class="count-numbers">-</span>
                         <span class="count-name">höchste Besucherzahl (Heute)</span>
                         {% endif %}
-
-
                     </div>
                 </div>
 
@@ -117,14 +112,12 @@
                         <span class="count-numbers">-</span>
                         <span class="count-name">höchste Besucherzahl (Woche)</span>
                         {% endif %}
-
                     </div>
                 </div>
             </div>
 
 
-            <!-- dritte Reihe Cards -->
-
+            <!-- dritte Reihe; überwachter Zeitraum -->
 
             <div class="row">
                 <div class="col-md-3">
@@ -134,7 +127,6 @@
                         {% else %}
                         <span class="count-numbers">-</span>
                         {% endif %}
-
                         <span class="count-name">überwachter Zeitraum (Heute)</span>
                     </div>
                 </div>
@@ -149,60 +141,25 @@
                         <span class="count-name">überwachter Zeitraum (Gestern)</span>
                     </div>
                 </div>
-
-
             </div>
         </div>
-
-
     </div>
-
-    <div id="Gestern" class="tabcontent">
-        <h3>Gestern <span id="yesterday"></span></h3>
-
-        {% if setting.yesterdayAvailable %}
-
-        <img class="img_center"
-             src="{{ url_for('plots.plot_visitor_yesterday') }}" alt="my plot">
-
-        {% else %}
-
-        <h4>Für den gestrigen Tag sind keine Besucherzahlen erfasst worden.</h4>
-
-        {% endif %}
-
-
-    </div>
-
-    <div id="Woche" class="tabcontent">
-        <h3>Diese Woche <span id="7days"></span></h3>
-
-        <img style="display: block; text-align: center;" src="{{ url_for('plots.plot_visitor_week') }}" alt="my plot">
-    </div>
-
-
-    <div id="Gesamt" class="tabcontent">
-        <h3>Gesamt</h3>
-
-    </div>
-
-    <br>
-    <br>
-
 </div>
+<br>
+<br>
 
 <!-- Abstandskontrolle -->
 <div>
     <h1>Abstandskontrolle</h1>
 
     <div class="tab">
-        <button class="tablinks" onclick="openVisitorPlots(event, 'heatMap')">Heat Map</button>
+        <button class="tablinks" target="_distance_plot">Heat Map</button>
 
 
     </div>
 
     <!-- heatmap -->
-    <div id="heatMap" class="tabcontent">
+    <div id="div_distance_plot" class="tabcontent">
         <h3>Bereiche mit gehäuften Abstandsunterschreitungen</h3>
         <br>
 
@@ -214,26 +171,26 @@
     </div>
 
 
-    <br>
-    <br>
 </div>
+<br>
+<br>
 
 <!-- Masken Analytics --->
 <div>
     <h1>Maskenerkennung</h1>
 
     <div class="tab">
-        <button class="tablinks" onclick="openVisitorPlots(event, 'maskToday')">Heute</button>
-        <button class="tablinks" onclick="openVisitorPlots(event, 'maskYesterday')">Gestern</button>
-        <button class="tablinks" onclick="openVisitorPlots(event, 'maskWeek')">7 Tage</button>
-        <button class="tablinks" onclick="openVisitorPlots(event, 'maskTotal')">Gesamt</button>
+        <button class="tablinks" target="_mask_today">Heute</button>
+        <button class="tablinks" target="_mask_yesterday">Gestern</button>
+        <button class="tablinks" target="_mask_week">7 Tage</button>
+        <button class="tablinks" target="_mask_total">Gesamt</button>
 
 
     </div>
 
-    <!-- Tab content -->
-    <div id="maskToday" class="tabcontent">
-        <h3>Heute <span id="today1"></span></h3>
+
+    <div id="div_mask_today" class="tabcontent">
+        <h3>Heute <span id="date_today"></span></h3>
 
 
         {% if piePlotsSettings.todayAvailable %}
@@ -249,8 +206,8 @@
 
     </div>
 
-    <div id="maskYesterday" class="tabcontent">
-        <h3>Gestern <span id="yesterday1"></span></h3>
+    <div id="div_mask_yesterday" class="tabcontent">
+        <h3>Gestern <span id="date_yesterday"></span></h3>
 
 
         {% if piePlotsSettings.yesterdayAvailable %}
@@ -265,8 +222,8 @@
 
     </div>
 
-    <div id="maskWeek" class="tabcontent">
-        <h3>Diese Woche <span id="7days1"></span></h3>
+    <div id="div_mask_week" class="tabcontent">
+        <h3>Diese Woche <span id="date_week"></span></h3>
 
         {% if piePlotsSettings.weekAvailable %}
         <br>
@@ -282,7 +239,7 @@
     </div>
 
 
-    <div id="maskTotal" class="tabcontent">
+    <div id="div_mask_total" class="tabcontent">
         <h3>Gesamter Zeitraum</h3>
 
         {% if piePlotsSettings.totalAvailable %}
@@ -300,166 +257,21 @@
 <br>
 <br>
 
-
+<!-- Steuerung der Tabs der Kategorien -->
 <script>
-//das untere script
 
-
-//let filename = 'static/AnnualProjected-Modeled.csv';
-let filename = 'static/today3.csv';
-
-
-
-// all of your code should be inside this command
-d3.csv(filename).then(function(loadedData) {
-
-  // let's see if our data loaded correctly
-  // (and take a peek at how it's formatted)
-
-
-  // empty lists for our data and the labels
-  let data =   [];
-  let labels = [];
-
-  // use a for-loop to load the data from the
-  // file into our lists
-  for (let i=0; i<loadedData.length; i++) {
-
-
-    // get the year and mean temp for each listing
-    // note: the 'keys' here correspond to the headers
-    // in our file and need to be typed exactly
-    //let year =     loadedData[i].year;
-    //let meanTemp = loadedData[i].rcp45_weighted_mean;
-    let year =     loadedData[i].timestamp;
-    let meanTemp = loadedData[i].amount;
-
-
-    // add the year to our labels
-    labels.push(year);
-
-    // and mean temp to the data
-    data.push(meanTemp);
-  }
-
-  // basic line chart settings
-  let daten = {
-    type: 'line',
-    title: {
-      display: true,
-      text: 'Positive Cases of COVID in provinces of Canada'
-    },
-    data: {
-      labels: labels,  // the labels we loaded!
-      datasets: [{
-        data: data,    // the data we loaded!
-        label: new Date().toLocaleDateString(),
-        fill: false,
-        borderColor: 'rgb(100,100,100)'
-      }]
-    }
-
-  };
-
-
-
-  // with all that done, we can create our chart!
-  let chart = new Chart(document.getElementById('myChart1'), daten);
+$(function() {
+  $('.tablinks').click(function() {
+    $('.tabcontent').not('#div' + $(this).attr('target')).hide();
+    $('#div' + $(this).attr('target')).toggle();
+  });
 });
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 </script>
 
-<!-- dygraph -->
+<!-- Generieren der Datumsangaben für die MaskDetection Plots -->
 <script>
-
-
-    g = new Dygraph(
-      document.getElementById("demodivh"),
-      "static/ny-vs-sf.txt",
-      {
-        rollPeriod: 5,
-        showRoller: true,
-
-        title: 'Besucherzahlen',
-        ylabel: 'Besucherzahl',
-        width: '800',
-        legend: 'follow',
-        rightGap: '0'
-      }
-    );
-
-
-
-
-
-</script>
-
-
-<script>
-    g = new Dygraph(
-      document.getElementById("demodiv"),
-      "static/ny-vs-sf.txt",
-      {
-        rollPeriod: 14,
-        showRoller: true,
-        customBars: true,
-        title: 'NYC vs. SF',
-        ylabel: 'Temperature (F)',
-        legend: 'always'
-      }
-    );
-
-
-
-
-</script>
-
-<!-- visitor plot -->
-<script>
-    var x = 0;
-
-    function openVisitorPlots(evt, cityName) {
-  // Declare all variables
-  var i, tabcontent, tablinks;
-
-  // Get all elements with class="tabcontent" and hide them
-  tabcontent = document.getElementsByClassName("tabcontent");
-  for (i = 0; i < tabcontent.length; i++) {
-    tabcontent[i].style.display = "none";
-  }
-
-  // Get all elements with class="tablinks" and remove the class "active"
-  tablinks = document.getElementsByClassName("tablinks");
-  for (i = 0; i < tablinks.length; i++) {
-    tablinks[i].className = tablinks[i].className.replace(" active", "");
-  }
-
-
-  // Show the current tab, and add an "active" class to the button that opened the tab
-  if (x == 0) {
-    document.getElementById(cityName).style.display = "block";
-    evt.currentTarget.className += " active";
-    x = 1;
-    } else {
-    document.getElementById(cityName).style.display = "hidden";
-    x = 0;
-    }
-
-}
-
 //Datum
 
 var dt = new Date();
@@ -469,33 +281,16 @@ var dt_week = new Date()
 dt_week.setDate(dt_week.getDate() - 7);
 
 
-// visitor
-document.getElementById("today").innerHTML = dt.toLocaleDateString();
-document.getElementById("yesterday").innerHTML = dt_yesterday.toLocaleDateString();
-document.getElementById("7days").innerHTML = dt_week.toLocaleDateString() + " - " + dt.toLocaleDateString();
-
 // mask
-document.getElementById("today1").innerHTML = dt.toLocaleDateString();
-document.getElementById("yesterday1").innerHTML = dt_yesterday.toLocaleDateString();
-document.getElementById("7days1").innerHTML = dt_week.toLocaleDateString() + " - " + dt.toLocaleDateString();
-
-
-
-
-
-
-
-
-
-
-
-
-
+document.getElementById("date_today").innerHTML = dt.toLocaleDateString();
+document.getElementById("date_yesterday").innerHTML = dt_yesterday.toLocaleDateString();
+document.getElementById("date_week").innerHTML = dt_week.toLocaleDateString() + " - " + dt.toLocaleDateString();
 
 
 
 </script>
-<!-- pieChartToday-->
+
+<!-- pieChart today -->
 <script>
 var request = {{ piePlotsSettings.pieChartDataToday }};
 
@@ -551,11 +346,8 @@ Highcharts.chart('pieChartToday', {
 
 
 
-
-
-
-
 </script>
+
 <!-- piechart yesterday -->
 <script>
 
@@ -612,20 +404,11 @@ Highcharts.chart('pieChartYesterday', {
 
 
 
-
-
-
-
-
-
-
-
 </script>
-<!-- piechart week-->
+
+<!-- piechart week -->
 <script>
-
-
-        var request = {{ piePlotsSettings.pieChartDataWeek }};
+      var request = {{ piePlotsSettings.pieChartDataWeek }};
 
 Highcharts.chart('pieChartWeek', {
     chart: {
@@ -677,18 +460,9 @@ Highcharts.chart('pieChartWeek', {
 });
 
 
-
-
-
-
-
-
-
-
-
-
 </script>
-<!-- piechart total-->
+
+<!-- piechart total -->
 <script>
 
 
@@ -744,18 +518,9 @@ Highcharts.chart('pieChartTotal', {
 });
 
 
-
-
-
-
-
-
-
-
 </script>
 
-<!-- heatmap img no cache -->
-
+<!-- Suffix für HeatMap erzeugen damit das Bild stets neu und auf den aktuellen Daten berechnet wird -->
 <script>
 <!-- to prevent caching the heatmap image we add the current datetime to force a roload -->
     var d = new Date();
@@ -764,10 +529,8 @@ Highcharts.chart('pieChartTotal', {
        d.getTime();
 
 
-
 </script>
 
-</script>
 
 <style>
     .tabcontent {
@@ -823,9 +586,6 @@ Highcharts.chart('pieChartTotal', {
 }
 
 
-
-
-
 .card-counter{
     box-shadow: 2px 2px 10px #DADADA;
     margin: 5px;
@@ -864,13 +624,6 @@ Highcharts.chart('pieChartTotal', {
     display: block;
     font-size: 15px;
   }
-
-
-
-
-
-
-
 
 
 
