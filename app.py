@@ -117,9 +117,13 @@ def maskdetection():
 @is_logged_in
 @check_rights
 def person_counter():
+    use_traffic_light = False
     camera = request.args.get("camera")
     predefined_person_count = request.args.get("persons")
     threshold = request.args.get("threshold")
+    ## Werte für Ampel
+    yellow_mark = request.args.get("yellow")
+    red_mark = request.args.get("red")
 
     if camera is not None and camera == 'off' and personCounterStream.status() == True:
         personCounterStream.close()
@@ -131,11 +135,22 @@ def person_counter():
 
         if threshold is not None:
             personCounterStream.minConfidence = float(threshold.replace(',', '.'))
+
+        if yellow_mark is not None:
+            personCounterStream.yellow_mark = int(yellow_mark)
+            # Sobald die gelbe oder rote Markierung vorliegt wird die Ampel benutzt
+            use_traffic_light = True
+
+        if red_mark is not None:
+            personCounterStream.red_mark = int(red_mark)
+
+
         personCounterStream.open()
         flash("Stream erfolgreich gestartet", "success")
 
     setting = dict(
         stream_on=personCounterStream.status(),
+        use_traffic_light=use_traffic_light,
 
     )
     return render_template('person_counter.html', setting=setting)
@@ -352,7 +367,10 @@ def backgroundPersonCounter():
         currentFps=personCounterStream.get_fps(),
         currentAmountOfPersonInside=personCounterStream.totalPersonsInside,
         personsIn=personCounterStream.totalIn,
-        personsOut=personCounterStream.totalOut
+        personsOut=personCounterStream.totalOut,
+        yellow_mark=personCounterStream.yellow_mark,
+        red_mark=personCounterStream.red_mark,
+
 
     )
 

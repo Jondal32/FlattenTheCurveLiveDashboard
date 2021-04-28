@@ -87,6 +87,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <br>
@@ -134,10 +135,6 @@
     <a id="cam-btn-on" href="/person_counter?camera=on" class="btn btn-primary" role="button">Stream einschalten</a>
 
 
-
-
-
-
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal"
             data-whatever="Stream mit Zusatzinformationen einschalten">
         Stream mit Zusatzinformationen einschalten
@@ -152,23 +149,32 @@
                             aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title" id="exampleModalLabel">Zusatzinformationen</h4>
                 </div>
-                <form onsubmit="window.location = '/person_counter?camera=on&persons=' + number.value + '&threshold=' + threshold.value; return false;">
+                <form onsubmit="window.location = '/person_counter?camera=on&persons=' + number.value + '&threshold=' + threshold.value + '&yellow=' + yellow.value  + '&red=' + red.value ; return false;">
                     <div class="modal-body">
 
                         <label for="number" class="control-label">Personen im Geschäft:</label>
-                        <input id="number" class="form-control" type="number" min="0" max="1000" step="1"
+                        <input id="number" class="form-control" type="number" min="0" max="5000" step="1"
                                placeholder="Anzahl" required>
                         <br>
 
                         <label for="threshold" class="control-label">Vorhersagegenauigkeit:</label>
                         <input id="threshold" class="form-control" type="number" min="0.1" max="0.9" step="0.1"
                                placeholder="default=0.5 (&#x2259; 50%)" required>
+                        <br>
+                        <label for="yellow" class="control-label">Schwellenwert für kritische Besucherzahl (Ampel wird Gelb)</label>
+                        <input id="yellow" name="yellow" class="form-control" type="number" min="1" max="5000" step="1"
+                               placeholder="Anzahl" required>
+                        <br>
+                        <label for="red" class="control-label">Schwellenwert maximale Besucherzahl (Ampel wird Rot)</label>
+                        <input id="red" name="red" class="form-control" type="number" min="1" max="5000" step="1"
+                               placeholder="Anzahl" onsubmit="" required>
 
                     </div>
                     <div class="modal-footer">
 
                         <button type="button" class="btn btn-default" data-dismiss="modal">Schließen</button>
-                        <input class="btn btn-primary" type="submit" value="Stream mit Zusatzinformationen starten">
+                        <input class="btn btn-primary" type="submit" onclick="return validate();"
+                               value="Stream mit Zusatzinformationen starten">
                     </div>
                 </form>
             </div>
@@ -179,28 +185,114 @@
     {% endif %}
 </div>
 
+<br>
+<hr>
+<script>
+function validate(){
+     var yellow = parseInt(document.getElementById('yellow').value);
+     var red = parseInt(document.getElementById('red').value);
+     if(yellow >= red){
+         alert('Der Schwellenwert für die kritische Besucherzahl ist größer als die maximale Besucherzahl');
+          return false;
+     }
+}
+
+
+
+</script>
 
 <div>
     <br>
 
     {% if setting.stream_on %}
+    {% endif %}
     <div class="container-fluid">
         <!-- Example row of columns -->
         <div class="row">
-            <div class="container-fluid" id="data-person-counter">
+            <div class="container-fluid" id="data-person-counter1">
             </div>
         </div>
     </div>
-    {% endif %}
+
 </div>
 
+<div class="row">
 
-<!-- Cards beschriften -->
+    <div class="col-md-3">
+        <h4 class="text-center">Aktuelle Auslastung</h4>
+        <div class="parent-traffic-light">
+            <div class="traffic-light">
+                <div class="circle"></div>
+                <div class="circle"></div>
+                <div class="circle"></div>
+            </div>
+        </div>
+        <br>
+    </div>
+
+
+    <div class="col-md-9">
+        <div class="container-fluid" id="data-person-counter2">
+        </div>
+
+    </div>
+
+
+</div>
+
+<!-- traffic light,  Cards beschriften -->
 <script>
 {% if setting.stream_on %}
+;(function(doc){
+    let runLight = false;
+    let interval;
+    let step = 1; let count = 0;
 
-function request()
-{
+    function removeClasses(elem, colors) {
+        let len = colors.length;
+        for(item of elem) {
+            for(let i = 0; i < len; i++) {
+                if(item.classList.contains(colors[i])) {
+                    item.classList.remove(colors[i]);
+                }
+            }
+        }
+    }
+
+    function runInterval(elem, colors, current_count, yellow_mark, red_mark) {
+
+
+        removeClasses(elem, colors);
+        if (current_count >= red_mark) {
+           elem[0].classList.add(colors[0]);
+        } else if (current_count >= yellow_mark) {
+           elem[1].classList.add(colors[1]);
+        } else {
+            elem[2].classList.add(colors[2]);
+        }
+
+
+    }
+
+    function run(current_count,yellow_mark,red_mark) {
+        let light = doc.querySelectorAll('.circle');
+        if(light !== null) {
+            let lightColor = ["red", "yellow", "green"];
+            runInterval(light, lightColor, current_count, yellow_mark, red_mark);
+        }
+    }
+
+    function turnOffLight() {
+        let light = doc.querySelectorAll('.circle');
+        if(light !== null) {
+            let lightColor = ["red", "yellow", "green"];
+            removeClasses(light, lightColor);
+        }
+    }
+
+
+    function request()
+    {
 
     $.get('/backgroundPersonCounter', function(data) {
         $("#fps").text(data.currentFps.toFixed(2));
@@ -208,11 +300,20 @@ function request()
         $("#person_in").text(data.personsIn);
         $("#person_out").text(data.personsOut);
 
+
+        {% if setting.use_traffic_light %}
+        run(data.currentAmountOfPersonInside,data.yellow_mark,data.red_mark);
+        {% else %}
+        turnOffLight();
+        {% endif %}
+
+
     })
     setTimeout(request, 5000);
 
-}
-request();
+    }
+    request();
+})(document);
 
 
 {% endif %}
@@ -220,10 +321,17 @@ request();
 
 
 
+</script>
+
+
+<!-- Cards beschriften -->
+<script>
+{% if setting.stream_on %}
 
 
 
 
+{% endif %}
 
 
 
@@ -253,6 +361,13 @@ request();
 
 
 
+
+
+
+
+
+
+
 </script>
 
 <!-- popover bei mehr informationen -->
@@ -263,6 +378,13 @@ $('#exampleModal').on('show.bs.modal', function (event) {
   var modal = $(this)
   modal.find('.modal-body input').val(recipient)
 })
+
+
+
+
+
+
+
 
 
 
@@ -354,6 +476,13 @@ $('#exampleModal').on('show.bs.modal', function (event) {
 
 
         });
+
+
+
+
+
+
+
 
 
 

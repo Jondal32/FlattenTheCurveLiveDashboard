@@ -261,6 +261,7 @@ class CentroidTracker:
 class Stream:
 
     def __init__(self):
+
         self.camera_src = inputFile
         self.camera = None
         self.fps = 0
@@ -268,6 +269,10 @@ class Stream:
         self.totalOut = 0
         self.totalPersonsInside = 0
         self.minConfidence = 0.5
+
+        # Personen Anzahl ab der es kritisch wird und die Ampel umspringt
+        self.red_mark = None
+        self.yellow_mark = None
 
         self.limitIn = None
         self.limitOut = None
