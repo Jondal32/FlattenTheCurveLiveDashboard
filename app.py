@@ -121,6 +121,7 @@ def person_counter():
     camera = request.args.get("camera")
     predefined_person_count = request.args.get("persons")
     threshold = request.args.get("threshold")
+
     ## Werte für Ampel
     yellow_mark = request.args.get("yellow")
     red_mark = request.args.get("red")
@@ -305,8 +306,8 @@ def person_counter_video():
 
 @app.route('/data', methods=["GET", "POST"])
 def data():
-    current_in = personCounterStream.get_TotalIn()
-    current_out = personCounterStream.get_TotalOut()
+    current_in = personCounterStream.totalIn
+    current_out = personCounterStream.totalOut
 
     # %Y-%m-%d , time2.strftime('%H:%M:%S')
 

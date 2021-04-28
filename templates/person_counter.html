@@ -186,7 +186,9 @@
 </div>
 
 <br>
-<hr>
+<hr style="height:1px;border:none;color:#333;background-color:#333;" />
+
+<!-- validiert dass die maximale Besucherzahl > kritische Schwelle -->
 <script>
 function validate(){
      var yellow = parseInt(document.getElementById('yellow').value);
@@ -204,8 +206,8 @@ function validate(){
 <div>
     <br>
 
-    {% if setting.stream_on %}
-    {% endif %}
+
+
     <div class="container-fluid">
         <!-- Example row of columns -->
         <div class="row">
@@ -215,11 +217,12 @@ function validate(){
     </div>
 
 </div>
-
+{% if setting.stream_on %}
 <div class="row">
 
     <div class="col-md-3">
         <h4 class="text-center">Aktuelle Auslastung</h4>
+        <br>
         <div class="parent-traffic-light">
             <div class="traffic-light">
                 <div class="circle"></div>
@@ -232,13 +235,14 @@ function validate(){
 
 
     <div class="col-md-9">
-        <div class="container-fluid" id="data-person-counter2">
+        <div class="container-fluid" id="data-person-counter">
         </div>
 
     </div>
 
 
 </div>
+{% endif %}
 
 <!-- traffic light,  Cards beschriften -->
 <script>

@@ -78,7 +78,7 @@ def getVisitorData():
     results = []
 
     queries = ["SELECT ROUND(AVG(amount),1) as avg_total from person_counter",
-               "SELECT ROUND(AVG(amount),1)  as avg_daily FROM person_counter WHERE DATE(timestamp) = CURDATE()",
+               "SELECT ROUND(AVG(amount),1) as avg_daily FROM person_counter WHERE DATE(timestamp) = CURDATE()",
                "SELECT ROUND(AVG(amount),1) as avg_yesterday FROM person_counter WHERE DATE(timestamp) = CURDATE() - INTERVAL 1 DAY ",
                "SELECT ROUND(AVG(amount),1) as avg_week FROM person_counter WHERE DATE(timestamp) <= CURDATE() "
                "AND DATE(timestamp) >= CURDATE() - INTERVAL 7 DAY ",
