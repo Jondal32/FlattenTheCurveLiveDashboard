@@ -20,7 +20,6 @@ from helper.plot_creater import *
 from helper.create_pie_plots import *
 from helper.backgroundTasks import *
 
-
 ###
 import threading
 import time as clock
@@ -67,15 +66,18 @@ def check_rights(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         cur = mysql.connection.cursor()
-        rights = cur.execute("SELECT 'user_rights' FROM users WHERE username = %s", [session['username']])
-
+        result = cur.execute("SELECT rights FROM users WHERE username = %s", [session['username']])
+        user_rights = cur.fetchall()
         cur.close()
 
-        if 'logged_in' in session and rights == 1:
+        """berechtige Personen haben in den Datenbank bei rights als bit-value = 1  und nicht berechtige Personen 
+        bit-value = 0 """
+
+        if 'logged_in' in session and user_rights[0]['rights'] == b'\x01':
             return f(*args, **kwargs)
         else:
             flash(
-                'Kein Zugriff! Bitte kontaktieren Sie Ihren Vorgesetzen oder den Datenbank Administrator um die passendes Rechte zu bekommen',
+                'Kein Zugriff! Bitte kontaktieren Sie Ihren Vorgesetzen oder den Datenbank Administrator um die passendes Rechte zu erhalten',
                 'danger')
             return redirect(url_for('index'))
 
