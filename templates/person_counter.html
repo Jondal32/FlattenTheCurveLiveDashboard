@@ -157,15 +157,18 @@
                                placeholder="Anzahl" required>
                         <br>
 
-                        <label for="threshold" class="control-label">Vorhersagegenauigkeit:</label>
+                        <label for="threshold" class="control-label">Sicherheit bei der Vorhersage (0.5 &#x2259; 50%)
+                            :</label>
                         <input id="threshold" class="form-control" type="number" min="0.1" max="0.9" step="0.1"
-                               placeholder="default=0.5 (&#x2259; 50%)" required>
+                               placeholder="0.5">
                         <br>
-                        <label for="yellow" class="control-label">Schwellenwert für kritische Besucherzahl (Ampel wird Gelb)</label>
+                        <label for="yellow" class="control-label">Schwellenwert für kritische Besucherzahl (Ampel wird
+                            Gelb)</label>
                         <input id="yellow" name="yellow" class="form-control" type="number" min="1" max="5000" step="1"
                                placeholder="Anzahl" required>
                         <br>
-                        <label for="red" class="control-label">Schwellenwert maximale Besucherzahl (Ampel wird Rot)</label>
+                        <label for="red" class="control-label">Schwellenwert maximale Besucherzahl (Ampel wird
+                            Rot)</label>
                         <input id="red" name="red" class="form-control" type="number" min="1" max="5000" step="1"
                                placeholder="Anzahl" onsubmit="" required>
 
@@ -186,7 +189,7 @@
 </div>
 
 <br>
-<hr style="height:1px;border:none;color:#333;background-color:#333;" />
+<hr style="height:1px;border:none;color:#333;background-color:#333;"/>
 
 <!-- validiert dass die maximale Besucherzahl > kritische Schwelle -->
 <script>
@@ -201,11 +204,12 @@ function validate(){
 
 
 
+
+
 </script>
 
 <div>
     <br>
-
 
 
     <div class="container-fluid">
@@ -325,6 +329,7 @@ function validate(){
 
 
 
+
 </script>
 
 
@@ -336,6 +341,7 @@ function validate(){
 
 
 {% endif %}
+
 
 
 
@@ -372,6 +378,7 @@ function validate(){
 
 
 
+
 </script>
 
 <!-- popover bei mehr informationen -->
@@ -382,6 +389,7 @@ $('#exampleModal').on('show.bs.modal', function (event) {
   var modal = $(this)
   modal.find('.modal-body input').val(recipient)
 })
+
 
 
 
@@ -480,6 +488,7 @@ $('#exampleModal').on('show.bs.modal', function (event) {
 
 
         });
+
 
 
 

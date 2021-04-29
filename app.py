@@ -42,7 +42,7 @@ weightsPath = 'models/face_detector/res10_300x300_ssd_iter_140000.caffemodel'
 faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 maskNet = load_model('models/face_detection_mobilenetv2')
 
-from core.mask_detection_2 import Stream as mask_stream
+from core.mask_detection import Stream as mask_stream
 from core.person_counter_script_2 import Stream as person_counter_stream
 
 camera_off = False
@@ -134,7 +134,7 @@ def person_counter():
             personCounterStream.totalIn = int(predefined_person_count)
             personCounterStream.totalOut = 0
 
-        if threshold is not None:
+        if threshold:
             personCounterStream.minConfidence = float(threshold.replace(',', '.'))
 
         if yellow_mark is not None:
