@@ -274,10 +274,14 @@ class Stream:
         self.red_mark = None
         self.yellow_mark = None
 
+        # Format, wichtig für Markierungen auf dem Stream
         self.limitIn = None
         self.limitOut = None
         self.H = None
         self.W = None
+
+        # Centroid Tracker
+        self.ct = None
 
     def get_TotalIn(self):
         # global totalIn
@@ -292,6 +296,11 @@ class Stream:
             self.camera.release()
             self.camera = None
 
+            ## reset everything
+            self.totalIn = 0
+            self.totalOut = 0
+            self.totalPersonsInside = 0
+
     def open(self):
         self.camera = cv2.VideoCapture(self.camera_src)  # webcamVideoStream(src=self.camera_src).start()
 
@@ -303,6 +312,9 @@ class Stream:
 
         self.limitIn = int(self.H / 2 + self.H / 5)
         self.limitOut = int(self.H / 2 - self.H / 5)
+
+        ## new instance of centroid tracker
+        self.ct = CentroidTracker(maxDisappeared=30, maxDistance=120)
 
     def status(self):
         return self.camera is not None
@@ -431,7 +443,7 @@ class Stream:
 
     def generateFrames(self):
 
-        ct = CentroidTracker(maxDisappeared=30, maxDistance=120)
+        self.ct = CentroidTracker(maxDisappeared=30, maxDistance=120)
 
         trackers = []
         trackableObjects = {}
@@ -487,7 +499,7 @@ class Stream:
                 else:
                     self.track(frame, trackers, rects)
 
-                objects = ct.update(rects)
+                objects = self.ct.update(rects)
                 self.counting(frame, objects, trackableObjects)  # , totalIn, totalOut)
 
                 # draw a two horizontal lines across the frame serving as boundaries
@@ -524,27 +536,8 @@ class Stream:
                 (flag, encodedImage) = cv2.imencode(".jpg", frame)
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
 
-                #     # check if the video writer is None
-                #     if writer is None:
-                #         # initialize our video writer
-                #         fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-                #         writer = cv2.VideoWriter(outputFile, fourcc, 30, (W, H), True)
-                #         print("writing...")
+            else:
+                # Centroid Tracker aus dem Arbeitsspeicher entfernen um Rechenleistung zu sparen
+                if self.ct is not None:
+                    self.ct = None
 
-                #     # write the output frame to disk
-                #     writer.write(frame)
-
-                # if cv2.waitKey(1) == ord("q"):
-                #    break
-
-
-        # print("[INFO] approx. FPS: {:.2f}".format(totalFPS.fps()))
-        # print("OUT : ", totalOut)
-        # print("IN : ", totalIn)
-
-        # release the file pointers
-
-        # writer.release()
-
-        # close any open windows
-        # cv2.destroyAllWindows()

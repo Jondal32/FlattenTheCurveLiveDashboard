@@ -397,4 +397,4 @@ if __name__ == '__main__':
     PieChartData = PieChartData()
 
     app.secret_key = 'secret123'
-    app.run(debug=True)
+    app.run()#debug=True)
