@@ -1,346 +1,93 @@
 import cv2
-
-import os
 import time
-import sys
 import numpy as np
-from matplotlib import pyplot as plt
-import imutils
-from imutils.video import VideoStream
-from imutils.video import FPS
 from scipy.spatial import distance as dist
 from collections import OrderedDict
 
 # used for tracking
 import dlib
 
-vs = cv2.VideoCapture()
+inputFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\1.mp4"
+# outputFile = "../../../data/output tf/pi22_tf_inc_10.avi"
+
+
+# minimum probability to filter weak detections
+minConfidence = 0.5
+
+# switch between detection and tracking
+# set number of frames to skip before doing a detection
+skipFrames = 5
+
+FPSUpdate = 50
+
+# Width of network's input image
+inputWidth = 300
+# Height of network's input image
+inputHeight = 300
+
 font = cv2.FONT_HERSHEY_SIMPLEX
 
+pbFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\models\ssd_mobilenet_v2_coco_2018_03_29\frozen_inference_graph.pb"
+pbtxtFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\models\ssd_mobilenet_v2_coco_2018_03_29\ssd_mobilenet_v2_coco_2018_03_29.pbtxt"
+
+modelName = "MobileNetV2"
+
+# cv2.dnn.writeTextGraph(pbFile, 'graph.pbtxt')
+
+status = "off"
+
+# WRITER to save computed stream to device
+writer = None
+
+vs = cv2.VideoCapture(inputFile)
+
 # get total frame to compute remaining processing time
+prop = cv2.CAP_PROP_FRAME_COUNT
+totalFrames = int(vs.get(prop))
 
+# H = int(vs.get(cv2.CAP_PROP_FRAME_HEIGHT))
+# W = int(vs.get(cv2.CAP_PROP_FRAME_WIDTH))
 
-H = int(vs.get(cv2.CAP_PROP_FRAME_HEIGHT))
-W = int(vs.get(cv2.CAP_PROP_FRAME_WIDTH))
+# limitIn = int(H / 2 + H / 5)
+# limitOut = int(H / 2 - H / 5)
 
-limitIn = int(H / 2 + H / 5)
-limitOut = int(H / 2 - H / 5)
+# net = cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
 
+USE_GPU = False
 
-class PersonCounter:
-    def __init__(self, minConfidence, skipFrames):
-        self.minConfidence = minConfidence
-        self.skipFrames = skipFrames
-        self.net = None
-        self.ct = CentroidTracker(maxDisappeared=30, maxDistance=120)
-        self.trackers = []
-        self.trackableObjects = {}
-        self.rects = []
-        self.totalOut = 0
-        self.totalIn = 0
-        self.fps = FPS().start()
-        self.totalFPS = FPS().start()
+# if USE_GPU:
+# set CUDA as the preferable backend and target
+#    print("[INFO] setting preferable backend and target to CUDA...")
+#    net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+#    net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
-        self.elapsedFrames = 0
-        self.FPSUpdate = 50
-        self.liveFPS = 0
+global trackers
+global trackableObjects
+global rects
+global liveFPS
+# totalIn = 0
+# totalOut = 0
+camera = None
 
-        self.inputWidth = 300
-        # Height of network's input image
-        self.inputHeight = 300
 
-        # switch between detection and tracking
-        # set number of frames to skip before doing a detection
+# function to draw bounding box on the detected object
+def drawBoundingBox(frame, box, centroid, color):
+    (startX, startY, endX, endY) = box
 
-    def load_model(self, model="models/ssd_mobilenet_v2_coco_2018_03_29/frozen_inference_graph.pb",
-                   config="models/ssd_mobilenet_v2_coco_2018_03_29/ssd_mobilenet_v2_coco_2018_03_29.pbtxt"):
+    # draw a red rectangle around detected objects
+    cv2.rectangle(
+        frame, (int(startX), int(startY)), (int(endX), int(endY)), color, thickness=2
+    )
 
-        self.net = cv2.dnn.readNetFromTensorflow(model, config)
 
-    def drawBoundingBox(self, frame, box, centroid, color):
-        (startX, startY, endX, endY) = box
+# return coordinates of the center (centroid) of a bbox
+def computeCentroid(box):
+    (startX, startY, endX, endY) = box
+    return np.array([startX + ((endX - startX) / 2), startY + ((endY - startY) / 2)])
 
-        # draw a red rectangle around detected objects
-        cv2.rectangle(
-            frame, (int(startX), int(startY)), (int(endX), int(endY)), color, thickness=2
-        )
 
-    # return coordinates of the center (centroid) of a bbox
-    def computeCentroid(self, box):
-        (startX, startY, endX, endY) = box
-        return np.array([startX + ((endX - startX) / 2), startY + ((endY - startY) / 2)])
-
-    def detect(self, frame, detections):
-        # loop over the detections
-        for detection in detections[0, 0, :, :]:
-            confidence = float(detection[2])
-
-            # if the confidence is above a threshold
-            if confidence > self.minConfidence:
-                classID = detection[1]
-
-                # proceed only if the object detected is indeed a human
-                if classID == 1:
-                    # get coordinates of the bbox
-                    left = detection[3] * W
-                    top = detection[4] * H
-                    right = detection[5] * W
-                    bottom = detection[6] * H
-
-                    box = [left, top, right, bottom]
-
-                    # construct a dlib rectangle object from the bounding
-                    # box coordinates and then start the dlib correlation
-                    # tracker
-                    tracker = dlib.correlation_tracker()
-                    rect = dlib.rectangle(int(left), int(top), int(right), int(bottom))
-
-                    tracker.start_track(frame, rect)
-
-                    self.trackers.append(tracker)
-
-                    self.rects.append(box)
-
-                    centroid = self.computeCentroid(box)
-
-                    self.drawBoundingBox(frame, box, centroid, color=(0, 0, 255))
-
-                    # cv2.putText(
-                    #    frame, status, (0, 115), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA
-                    # )
-
-    # object tracking using dlib and centroid tracker
-    def track(self, frame, trackers):
-        for tracker in trackers:
-            status = "Tracking"
-            # update the tracker and grab the position of the tracked
-            # object
-            tracker.update(frame)
-
-            pos = tracker.get_position()
-
-            # unpack the position object
-            left = int(pos.left())
-            top = int(pos.top())
-            right = int(pos.right())
-            bottom = int(pos.bottom())
-
-            box = [left, top, right, bottom]
-
-            self.rects.append(box)
-
-            centroid = self.computeCentroid(box)
-
-            self.drawBoundingBox(frame, box, centroid, color=(0, 128, 255))
-
-            # cv2.putText(frame, status, (0, 95), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
-
-    # people counting logic based on zone of appearance
-    def counting(self, frame, objects):
-
-        global totalIn
-        global totalOut
-
-        # loop over the tracked objects
-        for (objectID, centroid) in objects.items():
-
-            # check to see if a trackable object exists for the current
-            # object ID
-            to = self.trackableObjects.get(objectID, None)
-
-            # if there is no existing trackable object, create one
-            if to is None:
-                # define starting zone of the trackeable object (IN or OUT)
-                if centroid[1] >= H / 2:
-                    zone = "in"
-                else:
-                    zone = "out"
-
-                to = TrackableObject(objectID, centroid, zone)
-
-            # otherwise, there is a trackable object so we can utilize it
-            # to determine direction
-            else:
-                if to.zone == "in":
-                    if centroid[1] <= limitOut:
-                        totalOut += 1
-                        to.zone = "out"
-                        print("OUT : ", totalOut)
-
-                elif to.zone == "out":
-                    if centroid[1] >= limitIn:
-                        totalIn += 1
-                        to.zone = "in"
-                        print("IN : ", totalIn)
-
-                to.centroids.append(centroid)
-
-            # store the trackable object in our dictionary
-            self.trackableObjects[objectID] = to
-
-            # draw both the ID of the object and the centroid of the
-            # object on the output frame
-            cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 0, 255), -1)
-            cv2.putText(
-                frame,
-                "ID : " + str(objectID),
-                (centroid[0], centroid[1] + 20),
-                font,
-                0.6,
-                (0, 0, 255),
-                1,
-                cv2.LINE_AA,
-            )
-
-    def main(self):
-        while True:
-            # read the next frame from the file
-            (grabbed, frame) = vs.read()
-
-            # frame = imutils.resize(frame, width=300)q
-
-            # if the frame was not grabbed, then we have reached the end
-            # of the stream
-            if not grabbed:
-                print("Done processing !!!")
-                break
-
-            # list of detected rectangles
-            rects = []
-
-            # object detection only every n frames to improve performances
-            # strat dlib correlation tracker on detections
-            if self.elapsedFrames % self.skipFrames == 0:
-                trackers = []
-                status = "Detecting"
-
-                # Create the blob with a size of (300, 300)
-                blob = cv2.dnn.blobFromImage(
-                    frame, size=(self.inputWidth, self.inputHeight), swapRB=True, crop=False
-                )
-
-                # Feed the input blob to the network, perform inference and get the output:
-                # Set the input for the network
-                self.net.setInput(blob)
-
-                start = time.time()
-                detections = self.net.forward()
-                end = time.time()
-
-                self.detect(frame, detections)
-
-            # do tracking using detection data on every other frame
-            else:
-                self.track(frame, self.trackers)
-
-            objects = self.ct.update(self.rects)
-            self.counting(frame, objects)
-
-            # draw a two horizontal lines across the frame serving as boundaries
-            # one for peoples going IN and an other for OUT
-            cv2.line(frame, (0, limitIn), (W, limitIn), (0, 255, 255), 1)
-            cv2.line(frame, (0, limitOut), (W, limitOut), (255, 255, 0), 1)
-
-            # construct a tuple of information we will be displaying on the
-            # frame
-            info = [("Raus", totalOut), ("Rein", totalIn), ("im Markt", totalIn - totalOut)]
-
-            # loop over the info tuples and draw them on our frame
-            for (i, (k, v)) in enumerate(info):
-                text = "{}: {}".format(k, v)
-                cv2.putText(
-                    frame,
-                    text,
-                    (10, H - ((i * 20) + 20)),
-                    font,
-                    0.6,
-                    (0, 255, 255),
-                    1,
-                    cv2.LINE_AA,
-                )
-
-            # increment the total number of frames processed thus far and
-            # then update the FPS counter
-            self.elapsedFrames += 1
-            fps.update()
-
-            # time remaining estimator for local files processing
-            if self.elapsedFrames % self.FPSUpdate == 0:
-                fps.stop()
-                liveFPS = fps.fps()
-                print(
-                    "[INFO] Time remaining (min) : {:.1f}".format(
-                        (self.totalFrames - self.elapsedFrames) / int(liveFPS) / 60
-                    )
-                )
-
-                # start the frames per second throughput estimator
-                fps = FPS().start()
-            cv2.putText(
-                frame,
-                "FPS: {:.1f}".format(liveFPS),
-                (0, 15),
-                font,
-                0.5,
-                (0, 255, 255),
-                1,
-                cv2.LINE_AA,
-            )
-
-            """# draw metadatas on the frame
-            cv2.putText(
-                frame, "Model : " + modelName, (0, 15), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA
-            )
-            cv2.putText(
-                frame,
-                "Resolution : " + str(W) + "x" + str(H),
-                (0, 35),
-                font,
-                0.5,
-                (0, 255, 0),
-                1,
-                cv2.LINE_AA,
-            )
-            cv2.putText(
-                frame,
-                "FPS: {:.1f}".format(liveFPS),
-                (0, 55),
-                font,
-                0.5,
-                (0, 255, 0),
-                1,
-                cv2.LINE_AA,
-            )
-            cv2.putText(
-                frame,
-                "Detection : {:.2f} sec".format(end - start),
-                (0, 75),
-                font,
-                0.5,
-                (0, 255, 0),
-                1,
-                cv2.LINE_AA,
-            )"""
-
-            self.totalFPS.update()
-
-            # show the video beeing processed live
-            cv2.imshow("RPI", frame)
-
-            #     # check if the video writer is None
-            #     if writer is None:
-            #         # initialize our video writer
-            #         fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-            #         writer = cv2.VideoWriter(outputFile, fourcc, 30, (W, H), True)
-            #         print("writing...")
-
-            #     # write the output frame to disk
-            #     writer.write(frame)
-
-            if cv2.waitKey(1) == ord("q"):
-                break
-
-
+# for every bounding box detected, a trackeable object is created
+# to follow his path througn the frame
 class TrackableObject:
     def __init__(self, objectID, centroid, zone):
         # store the object ID, then initialize a list of centroids
@@ -508,3 +255,298 @@ class CentroidTracker:
 
         # return the set of trackable objects
         return self.objects
+
+
+class Stream:
+
+    def __init__(self):
+
+        self.camera_src = inputFile
+        self.camera = None
+        self.fps = 0
+        self.totalIn = 0
+        self.totalOut = 0
+        self.totalPersonsInside = 0
+        self.minConfidence = 0.5
+
+        # Network
+
+        self.net = cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
+
+        # Personen Anzahl ab der es kritisch wird und die Ampel umspringt
+        self.red_mark = None
+        self.yellow_mark = None
+
+        # Format, wichtig für Markierungen auf dem Stream
+        self.limitIn = None
+        self.limitOut = None
+        self.H = None
+        self.W = None
+
+        # Centroid Tracker
+        self.ct = None
+
+    def get_TotalIn(self):
+        # global totalIn
+        return self.totalIn
+
+    def get_TotalOut(self):
+        # global totalOut
+        return self.totalOut
+
+    def close(self):
+        if self.camera is not None:
+            self.camera.release()
+            self.camera = None
+
+            ## reset everything
+            self.totalIn = 0
+            self.totalOut = 0
+            self.totalPersonsInside = 0
+
+
+
+    def open(self):
+        self.camera = cv2.VideoCapture(self.camera_src)  # webcamVideoStream(src=self.camera_src).start()
+
+        # Festlegung der zwei Linien im Bild ab der jemand
+        # das Geschäft betritt oder verlässt anhand der Auflösung der Kamera
+        self.H = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.W = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+
+        self.limitIn = int(self.H / 2 + self.H / 5)
+        self.limitOut = int(self.H / 2 - self.H / 5)
+
+        ## new instance of centroid tracker
+        self.ct = CentroidTracker(maxDisappeared=30, maxDistance=120)
+
+        ## new instance of network
+
+        self.net = cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
+
+    def status(self):
+        return self.camera is not None
+
+    def get_fps(self):
+        return self.fps
+
+    def detect(self, frame, detections, trackers, rects):
+        # loop over the detections
+        for detection in detections[0, 0, :, :]:
+            confidence = float(detection[2])
+
+            # if the confidence is above a threshold
+            if confidence > self.minConfidence:
+                classID = detection[1]
+
+                # proceed only if the object detected is indeed a human
+                if classID == 1:
+                    # get coordinates of the bbox
+                    left = detection[3] * self.W
+                    top = detection[4] * self.H
+                    right = detection[5] * self.W
+                    bottom = detection[6] * self.H
+
+                    box = [left, top, right, bottom]
+
+                    # construct a dlib rectangle object from the bounding
+                    # box coordinates and then start the dlib correlation
+                    # tracker
+                    tracker = dlib.correlation_tracker()
+                    rect = dlib.rectangle(int(left), int(top), int(right), int(bottom))
+
+                    tracker.start_track(frame, rect)
+
+                    trackers.append(tracker)
+
+                    rects.append(box)
+
+                    centroid = computeCentroid(box)
+
+                    drawBoundingBox(frame, box, centroid, color=(0, 0, 255))
+
+                    # cv2.putText(
+                    #    frame, status, (0, 115), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA
+                    # )
+
+    # object tracking using dlib and centroid tracker
+    def track(self, frame, trackers, rects):
+        for tracker in trackers:
+            status = "Tracking"
+            # update the tracker and grab the position of the tracked
+            # object
+            tracker.update(frame)
+
+            pos = tracker.get_position()
+
+            # unpack the position object
+            left = int(pos.left())
+            top = int(pos.top())
+            right = int(pos.right())
+            bottom = int(pos.bottom())
+
+            box = [left, top, right, bottom]
+
+            rects.append(box)
+
+            centroid = computeCentroid(box)
+
+            drawBoundingBox(frame, box, centroid, color=(0, 128, 255))
+
+            # cv2.putText(frame, status, (0, 95), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
+
+    # people counting logic based on zone of appearance
+    def counting(self, frame, objects, trackableObjects):  # , totalIn, totalOut):
+
+        # loop over the tracked objects
+        for (objectID, centroid) in objects.items():
+
+            # check to see if a trackable object exists for the current
+            # object ID
+            to = trackableObjects.get(objectID, None)
+
+            # if there is no existing trackable object, create one
+            if to is None:
+                # define starting zone of the trackeable object (IN or OUT)
+                if centroid[1] >= self.H / 2:
+                    zone = "in"
+                else:
+                    zone = "out"
+
+                to = TrackableObject(objectID, centroid, zone)
+
+            # otherwise, there is a trackable object so we can utilize it
+            # to determine direction
+            else:
+                if to.zone == "in":
+                    if centroid[1] <= self.limitOut:
+                        self.totalOut += 1
+                        to.zone = "out"
+                        # print("OUT : ", totalOut)
+
+                elif to.zone == "out":
+                    if centroid[1] >= self.limitIn:
+                        self.totalIn += 1
+                        to.zone = "in"
+                        # print("IN : ", totalIn)
+
+                to.centroids.append(centroid)
+
+            # store the trackable object in our dictionary
+            trackableObjects[objectID] = to
+
+            # draw both the ID of the object and the centroid of the
+            # object on the output frame
+            cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 0, 255), -1)
+            cv2.putText(
+                frame,
+                "ID : " + str(objectID),
+                (centroid[0], centroid[1] + 20),
+                font,
+                0.6,
+                (0, 0, 255),
+                1,
+                cv2.LINE_AA,
+            )
+
+    def generateFrames(self):
+
+        self.ct = CentroidTracker(maxDisappeared=30, maxDistance=120)
+
+        trackers = []
+        trackableObjects = {}
+
+        elapsedFrames = 0
+
+        # start the frames per second throughput estimator
+        # self.fps = FPS().start()
+        # totalFPS = FPS().start()
+
+        # loop over frames from the video file stream
+        while True:
+            # read the next frame from the file
+            if self.camera is not None:
+                (grabbed, frame) = self.camera.read()
+                start = time.time()
+                self.totalPersonsInside = self.totalIn - self.totalOut
+
+                # frame = imutils.resize(frame, width=300)q
+
+                # if the frame was not grabbed, then we have reached the end
+                # of the stream
+                if not grabbed:
+                    self.camera = cv2.VideoCapture(inputFile)
+
+                    continue
+
+                # list of detected rectangles
+                rects = []
+
+                # object detection only every n frames to improve performances
+                # strat dlib correlation tracker on detections
+                if elapsedFrames % skipFrames == 0:
+                    trackers = []
+                    status = "Detecting"
+
+                    # Create the blob with a size of (300, 300)
+                    blob = cv2.dnn.blobFromImage(
+                        frame, size=(inputWidth, inputHeight), swapRB=True, crop=False
+                    )
+
+                    # Feed the input blob to the network, perform inference and get the output:
+                    # Set the input for the network
+                    self.net.setInput(blob)
+
+                    start = time.time()
+                    detections = self.net.forward()
+                    end = time.time()
+
+                    self.detect(frame, detections, trackers, rects)
+
+                # do tracking using detection data on every other frame
+                else:
+                    self.track(frame, trackers, rects)
+
+                objects = self.ct.update(rects)
+                self.counting(frame, objects, trackableObjects)  # , totalIn, totalOut)
+
+                # draw a two horizontal lines across the frame serving as boundaries
+                # one for peoples going IN and an other for OUT
+                cv2.line(frame, (0, self.limitIn), (self.W, self.limitIn), (0, 255, 255), 1)
+                cv2.line(frame, (0, self.limitOut), (self.W, self.limitOut), (255, 255, 0), 1)
+
+                # construct a tuple of information we will be displaying on the
+                # frame
+                info = [("Raus", self.totalOut), ("Rein", self.totalIn), ("im Markt", self.totalIn - self.totalOut)]
+
+                # loop over the info tuples and draw them on our frame
+                for (i, (k, v)) in enumerate(info):
+                    text = "{}: {}".format(k, v)
+                    cv2.putText(
+                        frame,
+                        text,
+                        (10, self.H - ((i * 20) + 20)),
+                        font,
+                        0.6,
+                        (0, 255, 255),
+                        1,
+                        cv2.LINE_AA,
+                    )
+
+                # increment the total number of frames processed thus far and
+                # then update the FPS counter
+                elapsedFrames += 1
+                # self.fps.update()
+
+                # show the video beeing processed live
+                # cv2.imshow("RPI", frame)
+
+                (flag, encodedImage) = cv2.imencode(".jpg", frame)
+                yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
+
+            else:
+                # Centroid Tracker aus dem Arbeitsspeicher entfernen um Rechenleistung zu sparen
+                if self.ct is not None:
+                    self.ct = None
+                if self.net is not None:
+                    self.net = None
