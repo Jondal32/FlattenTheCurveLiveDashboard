@@ -1,5 +1,7 @@
 # flask
-from flask import flash, redirect, url_for, session, request
+from typing import Dict, Any
+
+from flask import flash, redirect, url_for, session, request, jsonify
 from flask_mysqldb import MySQL
 from flask import Flask, render_template
 
@@ -44,6 +46,7 @@ maskNet = load_model('models/face_detection_mobilenetv2')
 
 from core.mask_detection import Stream as mask_stream
 from core.person_counter import Stream as person_counter_stream
+from core.distance_detection import Stream as distance_detection_stream
 
 camera_off = False
 
@@ -97,16 +100,16 @@ def index():
 def maskdetection():
     camera = request.args.get("camera")
 
-    if camera is not None and camera == 'off' and maskStream.status() == True:
-        maskStream.close()
+    if camera is not None and camera == 'off' and MaskStream.status() == True:
+        MaskStream.close()
         flash("Stream beendet", "info")
-    elif camera is not None and camera == 'on' and maskStream.status() == False:
-        maskStream.open()
+    elif camera is not None and camera == 'on' and MaskStream.status() == False:
+        MaskStream.open()
         flash("Stream erfolgreich gestartet!", "success")
 
     setting = dict(
-        stream_on=maskStream.status(),
-        fps=maskStream.get_fps(),
+        stream_on=MaskStream.status(),
+        fps=MaskStream.get_fps(),
         w=600
     )
 
@@ -126,31 +129,30 @@ def person_counter():
     yellow_mark = request.args.get("yellow")
     red_mark = request.args.get("red")
 
-    if camera is not None and camera == 'off' and personCounterStream.status() == True:
-        personCounterStream.close()
+    if camera is not None and camera == 'off' and PersonCounterStream.status() == True:
+        PersonCounterStream.close()
         flash("Stream beendet", "info")
-    elif camera is not None and camera == 'on' and personCounterStream.status() == False:
+    elif camera is not None and camera == 'on' and PersonCounterStream.status() == False:
         if predefined_person_count is not None:
-            personCounterStream.totalIn = int(predefined_person_count)
-            personCounterStream.totalOut = 0
+            PersonCounterStream.totalIn = int(predefined_person_count)
+            PersonCounterStream.totalOut = 0
 
         if threshold:
-            personCounterStream.minConfidence = float(threshold.replace(',', '.'))
+            PersonCounterStream.minConfidence = float(threshold.replace(',', '.'))
 
         if yellow_mark is not None:
-            personCounterStream.yellow_mark = int(yellow_mark)
+            PersonCounterStream.yellow_mark = int(yellow_mark)
             # Sobald die gelbe oder rote Markierung vorliegt wird die Ampel benutzt
             use_traffic_light = True
 
         if red_mark is not None:
-            personCounterStream.red_mark = int(red_mark)
+            PersonCounterStream.red_mark = int(red_mark)
 
-
-        personCounterStream.open()
+        PersonCounterStream.open()
         flash("Stream erfolgreich gestartet", "success")
 
     setting = dict(
-        stream_on=personCounterStream.status(),
+        stream_on=PersonCounterStream.status(),
         use_traffic_light=use_traffic_light,
 
     )
@@ -163,16 +165,15 @@ def person_counter():
 def distance_messurement():
     camera = request.args.get("camera")
 
-    if camera is not None and camera == 'off' and maskStream.status() == True:
-        maskStream.close()
+    if camera is not None and camera == 'off' and DistanceDetectionStream.status() == True:
+        DistanceDetectionStream.close()
         flash("Stream beendet", "info")
-    elif camera is not None and camera == 'on' and maskStream.status() == False:
-        maskStream.open()
+    elif camera is not None and camera == 'on' and DistanceDetectionStream.status() == False:
+        DistanceDetectionStream.open()
         flash("Stream erfolgreich gestartet", "success")
 
     setting = dict(
-        stream_on=maskStream.status(),
-        w=600
+        stream_on=DistanceDetectionStream.status(),
     )
     return render_template('distance_messurement.html', setting=setting)
 
@@ -294,20 +295,26 @@ def datenschutz():
 
 @app.route('/mask_detection_video', methods=['GET', 'POST'])
 def mask_detection_video():
-    return Response(maskStream.generateFrames(faceNet=faceNet, maskNet=maskNet),
+    return Response(MaskStream.generateFrames(faceNet=faceNet, maskNet=maskNet),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/person_counter_video', methods=['GET', 'POST'])
 def person_counter_video():
-    return Response(personCounterStream.generateFrames(),
+    return Response(PersonCounterStream.generateFrames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route('/distance_detection_video', methods=['GET', 'POST'])
+def distance_detection_video():
+    return Response(DistanceDetectionStream.generateFrames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/data', methods=["GET", "POST"])
 def data():
-    current_in = personCounterStream.totalIn
-    current_out = personCounterStream.totalOut
+    current_in = PersonCounterStream.totalIn
+    current_out = PersonCounterStream.totalOut
 
     # %Y-%m-%d , time2.strftime('%H:%M:%S')
 
@@ -329,8 +336,8 @@ def data():
 
 @app.route('/mask_detection_pie_chart_data', methods=["GET", "POST"])
 def mask_detection_pie_chart_data():
-    maskFrames = maskStream.maskFrames
-    noMaskFrames = maskStream.noMaskFrames
+    maskFrames = MaskStream.maskFrames
+    noMaskFrames = MaskStream.noMaskFrames
     maskProportion = None
     noMaskProportion = None
 
@@ -353,48 +360,45 @@ def mask_detection_pie_chart_data():
 @app.route('/backgroundMask', methods=["GET", "POST"])
 def backgroundMask():
     infos = dict(
-        currentFps=maskStream.get_fps(),
-        detected=maskStream.amount_detected,
-        withMask=maskStream.withMask,
-        withoutMask=maskStream.withoutMask
+        currentFps=MaskStream.get_fps(),
+        detected=MaskStream.amount_detected,
+        withMask=MaskStream.withMask,
+        withoutMask=MaskStream.withoutMask
     )
 
     return infos
+
+
+@app.route('/backgroundAbstandskontrolle', methods=["GET", "POST"])
+def backgroundAbstandskontrolle():
+    distance_info = dict(currentFps=DistanceDetectionStream.get_fps(), detected=DistanceDetectionStream.amount_detected,
+                         violations=DistanceDetectionStream.violations)
+
+    return jsonify(distance_info)
 
 
 @app.route('/backgroundPersonCounter', methods=["GET", "POST"])
 def backgroundPersonCounter():
-    infos = dict(
-        currentFps=personCounterStream.get_fps(),
-        currentAmountOfPersonInside=personCounterStream.totalPersonsInside,
-        personsIn=personCounterStream.totalIn,
-        personsOut=personCounterStream.totalOut,
-        yellow_mark=personCounterStream.yellow_mark,
-        red_mark=personCounterStream.red_mark,
-
+    person_counter_info = dict(
+        currentFps=PersonCounterStream.get_fps(),
+        currentAmountOfPersonInside=PersonCounterStream.totalPersonsInside,
+        personsIn=PersonCounterStream.totalIn,
+        personsOut=PersonCounterStream.totalOut,
+        yellow_mark=PersonCounterStream.yellow_mark,
+        red_mark=PersonCounterStream.red_mark,
 
     )
 
-    return infos
-
-
-@app.route('/backgroundMask', methods=["GET", "POST"])
-def backgroundDistance():
-    infos = dict(
-        currentFps=maskStream.get_fps(),
-        detected=maskStream.amount_detected,
-        withMask=maskStream.withMask,
-        withoutMask=maskStream.withoutMask
-    )
-
-    return infos
+    return person_counter_info
 
 
 if __name__ == '__main__':
-    ##jetson_cam = "nvarguscamerasrc ! video/x-raw(memory:NVMM), width=(int)1920, height=(int)1080, format=(string)NV12, framerate=(fraction)30/1 ! nvvidconv flip-method=2 ! video/x-raw, format=(string)BGRx ! videoconvert ! video/x-raw, format=(string)BGR ! appsink"
-    maskStream = mask_stream(camera_src="videos/1.mp4")
-    personCounterStream = person_counter_stream()
+    MaskStream = mask_stream(camera_src=0)
+    PersonCounterStream = person_counter_stream(
+        camera_src=r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\1.mp4")
+    DistanceDetectionStream = distance_detection_stream(
+        camera_src=r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\pedestrians.mp4")
 
     PieChartData = PieChartData()
     app.secret_key = 'secret123'
-    app.run()#debug=True)
+    app.run(debug=True)

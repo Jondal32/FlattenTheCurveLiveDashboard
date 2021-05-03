@@ -34,10 +34,6 @@ modelName = "MobileNetV2"
 
 # cv2.dnn.writeTextGraph(pbFile, 'graph.pbtxt')
 
-status = "off"
-
-# WRITER to save computed stream to device
-writer = None
 
 vs = cv2.VideoCapture(inputFile)
 
@@ -65,8 +61,7 @@ global trackers
 global trackableObjects
 global rects
 global liveFPS
-# totalIn = 0
-# totalOut = 0
+
 camera = None
 
 
@@ -259,9 +254,9 @@ class CentroidTracker:
 
 class Stream:
 
-    def __init__(self):
+    def __init__(self, camera_src):
 
-        self.camera_src = inputFile
+        self.camera_src = camera_src
         self.camera = None
         self.fps = 0
         self.totalIn = 0
@@ -348,6 +343,7 @@ class Stream:
                     bottom = detection[6] * self.H
 
                     box = [left, top, right, bottom]
+
 
                     # construct a dlib rectangle object from the bounding
                     # box coordinates and then start the dlib correlation
@@ -497,9 +493,9 @@ class Stream:
                     # Set the input for the network
                     self.net.setInput(blob)
 
-                    start = time.time()
+
                     detections = self.net.forward()
-                    end = time.time()
+
 
                     self.detect(frame, detections, trackers, rects)
 

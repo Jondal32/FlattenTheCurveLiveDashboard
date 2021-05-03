@@ -76,7 +76,7 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
 class Stream:
 
     def __init__(self, camera_src):
-        self.camera_src = camera_src
+        self.camera_src = 0
         self.camera = None
         self.prev_messages = ""
         self.fps = 0
@@ -95,21 +95,9 @@ class Stream:
             savePieChartData(self.maskFrames, self.noMaskFrames)
 
     def open(self):
-        """## für den jetson
-
-        width = 1920
-        height = 1080
-
-        gst_str = ('nvarguscamerasrc ! ' + 'video/x-raw(memory:NVMM), ' +
-                   'width=(int)1920, height=(int)1080, ' +
-                   'format=(string)NV12, framerate=(fraction)30/1 ! ' +
-                   'nvvidconv flip-method=2 ! ' +
-                   'video/x-raw, width=(int){}, height=(int){}, ' +
-                   'format=(string)BGRx ! ' +
-                   'videoconvert ! appsink').format(width, height) """
 
         self.camera = cv2.VideoCapture(
-            self.camera_src)  # ,cv2.CAP_GSTREAMER# webcamVideoStream(src=self.camera_src).start()
+            self.camera_src)
 
     def status(self):
         return self.camera is not None
