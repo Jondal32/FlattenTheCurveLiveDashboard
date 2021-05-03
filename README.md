@@ -2,8 +2,8 @@
 
 - [Smart Social Distancing](#smart-social-distancing)
   - [Einleitung](#einleitung)
-  - [Getting Started](#getting-started)
-    - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+    - [App starten](#app-starten)
   - [Probleme, Bugs und weitere Aufgaben](#probleme-und-bugs)
 
 
@@ -15,7 +15,6 @@ Zum aktuellen Zeitpunkt muss zusätzliches Personal für eine manuelle Einlassko
 Da alle Berechnungen auf einem Gerät ausgeführt werden sind so nur minimale Schritte für das Setup nötig und Datenschutz- und Sicherheitsbedenken werden minimiert. Wir haben uns bei der Implementierung für Flask Application mit einer MySql Datenbank entschieden. Die Automatisierung der Aufgaben umfasst dabei die automatisierte Erkennung von Masken, einen Person Zähler und die Kontrolle von Abständen zwsichen Personen.
 
 
-
 ## Installation
 
 Für die Installation befinden sich alle relevanten Anforderungen unter [requirements.txt](https://github.com/Jondal32/einfaches_dashboard_feb_2021_2/blob/master/requirements.txt).
@@ -24,6 +23,13 @@ Die Datenbank verfügt über ein User und Rollensystem, wodurch bei einer neuen 
 (Der Benutzer "Jondal" mit Passwort "123" ist bereits in der Datenbank hinterlegt und kann alle Funktion ausführen).
 Bei einer Anwendung über den Jetson Nano muss zusätzlich noch Jetson-Inference installiert werden und die Pfade in app.py entsprechend angepasst, sodass aus core anstatt der regulären Python Skripte die für den Jetson abgestimmten übernommen werden.
 Vor der Anwendung muss außerdem ein [models](https://drive.google.com/drive/folders/1bvcnWpXHDkKYeLWoLm6CNbMQfvspHzQi?usp=sharing) Ordner in das Repository eingefügt werden. Darin befinden sich bereits trainierte Machine-Learning Modelle für Maskenerkennung als auch Personen Zähler und die Abstandskontrolle.
+
+### App starten
+
+Nachdem die Datenbank installiert, aktiviert und die vorgegebene Datenstruktur migriert wurde kann die App gestartet werden.
+```bash
+python app.py
+```
 
 ## Probleme und Bugs
 
@@ -56,10 +62,5 @@ Vor der Anwendung muss außerdem ein [models](https://drive.google.com/drive/fol
 
 
 
-### App starten
 
-Nachdem die Datenbank installiert, aktiviert und die vorgegebene Datenstruktur migriert wurde kann die App gestartet werden.
-```bash
-python app.py
-```
 
