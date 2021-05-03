@@ -1,6 +1,6 @@
 # Dashboard zum Projektseminar "Flatten the Curve"
 
-- [Smart Social Distancing](#smart-social-distancing)
+- [Dashboard zum Projektseminar "Flatten the Curve"]
   - [Einleitung](#einleitung)
   - [Installation](#installation)
     - [App starten](#app-starten)
