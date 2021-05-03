@@ -553,7 +553,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `username`, `password`, `register_date`, `rights`, `user_rights`) VALUES
-(2, 'Manuel Glade', 'manuelglade@web.de', 'Jondal', '$5$rounds=535000$2ULwgV/7toqHz6Zz$nY7yz0KstoK7qcheHW4Q684iwtt.xOsDffdCFkPZmM6', '2021-02-11 13:45:35', b'1', ''),
+(2, 'Jondal', 'Jondal@web.de', 'Jondal', '$5$rounds=535000$2ULwgV/7toqHz6Zz$nY7yz0KstoK7qcheHW4Q684iwtt.xOsDffdCFkPZmM6', '2021-02-11 13:45:35', b'1', ''),
 (3, 'test', 'test12@gmail.com', 'tester', '$5$rounds=535000$zmoQApDfHxUoWr7.$LB5gTWPlRGA1wSHpqcmTFMh0tiVBZP1e7jJjSLWIut0', '2021-02-15 18:16:47', b'0', NULL),
 
 --
