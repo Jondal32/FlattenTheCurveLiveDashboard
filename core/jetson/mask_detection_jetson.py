@@ -78,7 +78,7 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
 class Stream:
 
     def __init__(self, camera_src):
-        self.camera_src = 0  # camera_src
+        self.camera_src = camera_src
         self.camera = None
         self.prev_messages = ""
         self.fps = 0
@@ -91,16 +91,6 @@ class Stream:
         self.noMaskFrames = 0
 
         self.stream_on = False
-        self.fpsFilt = 0
-        dispW = 1280
-        dispH = 720
-        flip = 2
-        self.camera = cv2.VideoCapture(
-            'nvarguscamerasrc wbmode=3 tnr-mode=2 tnr-strength=1 ee-mode=2 ee-strength=1 !  video/x-raw(memory:NVMM), '
-            'width=3264, height=2464, format=NV12, framerate=21/1 ! nvvidconv flip-method=' + str(
-                flip) + ' ! video/x-raw, width=' + str(dispW) + ', height=' + str(
-                dispH) + ', format=BGRx ! videoconvert ! video/x-raw, format=BGR ! videobalance contrast=1.5 '
-                         'brightness=-.2 saturation=1.2 !  appsink')
         self.net = jetson.inference.detectNet("ssd-mobilenet-v2", threshold=0.5)
 
         self.timeStamp = time.time()
@@ -125,8 +115,10 @@ class Stream:
             if self.stream_on:
                 ret, img = self.camera.read()
                 if not ret:
-                    print("break")
-                    break
+                    self.camera = cv2.VideoCapture(self.camera_src)
+
+                    continue
+
                 height = img.shape[0]
                 width = img.shape[1]
                 # img = camera.Capture()

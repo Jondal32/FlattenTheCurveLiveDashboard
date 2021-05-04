@@ -48,7 +48,12 @@ from core.mask_detection import Stream as mask_stream
 from core.person_counter import Stream as person_counter_stream
 from core.distance_detection import Stream as distance_detection_stream
 
-camera_off = False
+"""wenn die Jetson spezifischen Files genutzt werden sollen dann die vorherigen 3 Import Statements auskommentieren und diese verwenden"""
+
+
+# from core.jetson.mask_detection_jetson import Stream as mask_stream
+# from core.jetson.person_counter_jetson import Stream as person_counter_stream
+# from core.jetson.distance_detection_jetson import Stream as distance_detection_stream
 
 
 # Check if user logged in
@@ -87,13 +92,13 @@ def check_rights(f):
     return wrap
 
 
-# Index
+# Home Seite
 @app.route('/')
 def index():
     return render_template('home.html')
 
 
-# About
+
 @app.route('/maskdetection')
 @is_logged_in
 @check_rights
@@ -311,6 +316,7 @@ def distance_detection_video():
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+## Daten für das Linien Diagram von PersonCounter
 @app.route('/data', methods=["GET", "POST"])
 def data():
     current_in = PersonCounterStream.totalIn

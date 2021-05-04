@@ -3,9 +3,11 @@ from scipy.spatial import distance as dist
 import numpy as np
 import cv2
 import time
+import jetson.inference
+import jetson.utils
 
 
-class DistanceDetection:
+class Stream:
 
     def __init__(self, camera_src):
         self.camera_src = camera_src
@@ -87,8 +89,9 @@ class DistanceDetection:
 
                 # draw (1) a bounding box around the person and (2) the
                 # centroid coordinates of the person,
-                cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
-                cv2.circle(frame, (cX, cY), 5, color, 1)
+                thickness = 2
+                cv2.rectangle(frame, (int(startX), int(startY)), (int(endX), int(endY)), color, thickness)
+                cv2.circle(frame, (int(cX), int(cY)), 5, color, 1)
 
             self.violations = len(violate)
             self.amount_detected = len(results)
@@ -131,7 +134,7 @@ class DistanceDetection:
                     left = detection.Left
                     top = detection.Top
                     right = detection.Right
-                    bottom = detection.Buttom
+                    bottom = detection.Bottom
                     width = detection.Width
                     height = detection.Height
 

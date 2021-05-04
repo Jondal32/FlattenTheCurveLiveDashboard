@@ -255,9 +255,9 @@ class CentroidTracker:
 
 class Stream:
 
-    def __init__(self):
+    def __init__(self, camera_src):
 
-        self.camera_src = inputFile
+        self.camera_src = inputFile #camera_src
         self.camera = None
         self.fps = 0
         self.totalIn = 0
@@ -347,7 +347,7 @@ class Stream:
                     left = detection.Left
                     top = detection.Top
                     right = detection.Right
-                    bottom = detection.Buttom
+                    bottom = detection.Bottom
 
 
 

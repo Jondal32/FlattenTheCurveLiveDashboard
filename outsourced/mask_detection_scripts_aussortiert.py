@@ -1,33 +1,13 @@
-from flask import Flask
-from flask import render_template
-from flask import Response
-
-import cv2
 import threading
-import time
 
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from tensorflow.keras.preprocessing.image import img_to_array
-from tensorflow.keras.models import load_model
 
-from imutils.video import VideoStream
 import numpy as np
-import argparse
-import imutils
-import time
 import cv2
-import os
-import ctypes  # An included library with Python install.
-import random
-import json
-from random import random
-from flask import Flask, render_template, make_response
-from time import time
 # pip install imutils
-from imutils.video import VideoStream
 import imutils
-from datetime import datetime
-from webcamVideoStream import webcamVideoStream
+from outsourced.webcamVideoStream import webcamVideoStream
 
 outputFrame = None
 lock = threading.Lock()
