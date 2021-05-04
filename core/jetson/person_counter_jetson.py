@@ -9,64 +9,7 @@ import dlib
 import jetson.inference
 import jetson.utils
 
-#inputFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\1.mp4"
-inputFile = "videos/1.mp4"
-# outputFile = "../../../data/output tf/pi22_tf_inc_10.avi"
 
-
-# minimum probability to filter weak detections
-minConfidence = 0.5
-
-# switch between detection and tracking
-# set number of frames to skip before doing a detection
-skipFrames = 5
-
-FPSUpdate = 50
-
-# Width of network's input image
-inputWidth = 300
-# Height of network's input image
-inputHeight = 300
-
-font = cv2.FONT_HERSHEY_SIMPLEX
-
-pbFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\models\ssd_mobilenet_v2_coco_2018_03_29\frozen_inference_graph.pb"
-pbtxtFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\models\ssd_mobilenet_v2_coco_2018_03_29\ssd_mobilenet_v2_coco_2018_03_29.pbtxt"
-
-modelName = "MobileNetV2"
-
-# cv2.dnn.writeTextGraph(pbFile, 'graph.pbtxt')
-
-status = "off"
-
-# WRITER to save computed stream to device
-writer = None
-
-vs = cv2.VideoCapture(inputFile)
-
-# get total frame to compute remaining processing time
-prop = cv2.CAP_PROP_FRAME_COUNT
-totalFrames = int(vs.get(prop))
-
-# H = int(vs.get(cv2.CAP_PROP_FRAME_HEIGHT))
-# W = int(vs.get(cv2.CAP_PROP_FRAME_WIDTH))
-
-# limitIn = int(H / 2 + H / 5)
-# limitOut = int(H / 2 - H / 5)
-
-# net = cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
-
-
-global trackers
-global trackableObjects
-global rects
-global liveFPS
-# totalIn = 0
-# totalOut = 0
-camera = None
-
-
-# function to draw bounding box on the detected object
 def drawBoundingBox(frame, box, centroid, color):
     (startX, startY, endX, endY) = box
 
@@ -257,18 +200,19 @@ class Stream:
 
     def __init__(self, camera_src):
 
-        self.camera_src = inputFile #camera_src
+        self.camera_src = camera_src
         self.camera = None
         self.fps = 0
         self.totalIn = 0
         self.totalOut = 0
         self.totalPersonsInside = 0
         self.minConfidence = 0.5
+        self.skipFrames = 5
 
         # Network
 
         self.net = jetson.inference.detectNet("ssd-mobilenet-v2", threshold=self.minConfidence)
-        #cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
+        # cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
 
         # Personen Anzahl ab der es kritisch wird und die Ampel umspringt
         self.red_mark = None
@@ -300,8 +244,6 @@ class Stream:
             self.totalIn = 0
             self.totalOut = 0
             self.totalPersonsInside = 0
-
-
 
     def open(self):
         self.camera = cv2.VideoCapture(self.camera_src)  # webcamVideoStream(src=self.camera_src).start()
@@ -348,8 +290,6 @@ class Stream:
                     top = detection.Top
                     right = detection.Right
                     bottom = detection.Bottom
-
-
 
                     box = [left, top, right, bottom]
 
@@ -462,10 +402,6 @@ class Stream:
 
         elapsedFrames = 0
 
-        # start the frames per second throughput estimator
-        # self.fps = FPS().start()
-        # totalFPS = FPS().start()
-
         # loop over frames from the video file stream
         while True:
             # read the next frame from the file
@@ -474,12 +410,10 @@ class Stream:
                 start = time.time()
                 self.totalPersonsInside = self.totalIn - self.totalOut
 
-                # frame = imutils.resize(frame, width=300)q
-
-                # if the frame was not grabbed, then we have reached the end
-                # of the stream
+                # infinity loop
                 if not grabbed:
                     self.camera = cv2.VideoCapture(inputFile)
+                    elapsedFrames = 0
 
                     continue
 
@@ -491,24 +425,15 @@ class Stream:
 
                 # object detection only every n frames to improve performances
                 # strat dlib correlation tracker on detections
-                if elapsedFrames % skipFrames == 0:
+                if elapsedFrames % self.skipFrames == 0:
                     trackers = []
-                    status = "Detecting"
-
-                    # Create the blob with a size of (300, 300)
-                    #blob = cv2.dnn.blobFromImage(
-                    #    frame, size=(inputWidth, inputHeight), swapRB=True, crop=False
-                    #)
-
-                    # Feed the input blob to the network, perform inference and get the output:
-                    # Set the input for the network
-                    #self.net.setInput(blob)
 
                     start = time.time()
-                    #detections = self.net.forward()
+
                     cuda_frame = jetson.utils.cudaFromNumpy(frame)
                     detections = self.net.Detect(cuda_frame, width, height, overlay='none')
-                    end = time.time()
+
+                    self.fps = 1.0 / (time.time() - start)
 
                     self.detect(frame, detections, trackers, rects)
 
@@ -542,13 +467,7 @@ class Stream:
                         cv2.LINE_AA,
                     )
 
-                # increment the total number of frames processed thus far and
-                # then update the FPS counter
                 elapsedFrames += 1
-                # self.fps.update()
-
-                # show the video beeing processed live
-                # cv2.imshow("RPI", frame)
 
                 (flag, encodedImage) = cv2.imencode(".jpg", frame)
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')

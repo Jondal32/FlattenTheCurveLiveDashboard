@@ -43,7 +43,8 @@ python app.py
 Aufgrund der stark begrenzten Rechenleistung des Jetson Nano und der gleichzeitigen Anforderung einer Echtzeitanwendung der Machine Learning Modelle bliebt bei der Wahl der Modelle nur noch sehr wenig Spielraum.
 Besonders genaue aber dafür rechenintensive Modelle wie Yolo v3 oder v4 funktionieren zwar auf dem Jetson, jedoch nur mit einer sehr geringen Anzahl von verarbeiteten Bildern pro Sekunde, daher unbrauchbar für eine Echtzeitanwendung.
 Die Tiny Versionen beider Yolo Moelle wurden ebenfalls getestet. Hier sind die FPS schon wesentlich besser, jedoch auch die Vorhersagegenauigkeit gleichzeitig schlechter. Mit Yolo v3 Tiny konnte ohne das Flask Dashboard bei der Objekterkennung in etwa 10-15 FPS erreicht werden, jedoch war die Genauigkeit objektiv nicht merklich besser als beim Modell MobileNet-v2, für das wir uns letztendlich entschieden haben.  
-MobileNet-v2 ist dabei die Balance zwischen genügend verarbeiteten Bildern pro Sekunde für eine Echtzeitanwedung und dabei einigermaßen genauer Vorhersage.
+MobileNet-v2 ist dabei die Balance zwischen genügend verarbeiteten Bildern pro Sekunde für eine Echtzeitanwedung und dabei einigermaßen genauer Vorhersage.  
+Daher ist für jede Aufgabe des Dashboard ein MobileNet-v2 verwendet worden.
 
 
 Modell  | i7-6500U CPU 2.50GHz | Jetson Nano |

@@ -133,8 +133,6 @@ class Stream:
 
         detections = self.net.forward()
 
-        height = frame.shape[0]
-        width = frame.shape[1]
         results = []
 
         boxes = []

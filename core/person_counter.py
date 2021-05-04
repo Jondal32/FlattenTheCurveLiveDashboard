@@ -8,48 +8,14 @@ from collections import OrderedDict
 import dlib
 
 inputFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\1.mp4"
-# outputFile = "../../../data/output tf/pi22_tf_inc_10.avi"
-
-
-# minimum probability to filter weak detections
-minConfidence = 0.5
-
-# switch between detection and tracking
-# set number of frames to skip before doing a detection
-skipFrames = 5
-
-FPSUpdate = 50
-
-# Width of network's input image
-inputWidth = 300
-# Height of network's input image
-inputHeight = 300
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 pbFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\models\ssd_mobilenet_v2_coco_2018_03_29\frozen_inference_graph.pb"
 pbtxtFile = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\models\ssd_mobilenet_v2_coco_2018_03_29\ssd_mobilenet_v2_coco_2018_03_29.pbtxt"
 
-modelName = "MobileNetV2"
-
-# cv2.dnn.writeTextGraph(pbFile, 'graph.pbtxt')
-
-
-vs = cv2.VideoCapture(inputFile)
-
-# get total frame to compute remaining processing time
-prop = cv2.CAP_PROP_FRAME_COUNT
-totalFrames = int(vs.get(prop))
-
-# H = int(vs.get(cv2.CAP_PROP_FRAME_HEIGHT))
-# W = int(vs.get(cv2.CAP_PROP_FRAME_WIDTH))
-
-# limitIn = int(H / 2 + H / 5)
-# limitOut = int(H / 2 - H / 5)
-
-# net = cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
-
 USE_GPU = False
+
 
 # if USE_GPU:
 # set CUDA as the preferable backend and target
@@ -57,25 +23,16 @@ USE_GPU = False
 #    net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 #    net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
-global trackers
-global trackableObjects
-global rects
-global liveFPS
-
-camera = None
-
-
-# function to draw bounding box on the detected object
 def drawBoundingBox(frame, box, centroid, color):
     (startX, startY, endX, endY) = box
 
-    # draw a red rectangle around detected objects
+    # rote Box um erkannte Objekte
     cv2.rectangle(
         frame, (int(startX), int(startY)), (int(endX), int(endY)), color, thickness=2
     )
 
 
-# return coordinates of the center (centroid) of a bbox
+# Berechnet die Centroid und gibt die Koordinaten zurück
 def computeCentroid(box):
     (startX, startY, endX, endY) = box
     return np.array([startX + ((endX - startX) / 2), startY + ((endY - startY) / 2)])
@@ -263,8 +220,7 @@ class Stream:
         self.totalOut = 0
         self.totalPersonsInside = 0
         self.minConfidence = 0.5
-
-        # Network
+        self.skipFrames = 5
 
         self.net = cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
 
@@ -278,15 +234,20 @@ class Stream:
         self.H = None
         self.W = None
 
+        # Width of network's input image
+        self.inputWidth = 300
+        # Height of network's input image
+        self.inputHeight = 300
+
         # Centroid Tracker
         self.ct = None
 
     def get_TotalIn(self):
-        # global totalIn
+
         return self.totalIn
 
     def get_TotalOut(self):
-        # global totalOut
+
         return self.totalOut
 
     def close(self):
@@ -299,10 +260,8 @@ class Stream:
             self.totalOut = 0
             self.totalPersonsInside = 0
 
-
-
     def open(self):
-        self.camera = cv2.VideoCapture(self.camera_src)  # webcamVideoStream(src=self.camera_src).start()
+        self.camera = cv2.VideoCapture(self.camera_src)
 
         # Festlegung der zwei Linien im Bild ab der jemand
         # das Geschäft betritt oder verlässt anhand der Auflösung der Kamera
@@ -316,7 +275,6 @@ class Stream:
         self.ct = CentroidTracker(maxDisappeared=30, maxDistance=120)
 
         ## new instance of network
-
         self.net = cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
 
     def status(self):
@@ -344,7 +302,6 @@ class Stream:
 
                     box = [left, top, right, bottom]
 
-
                     # construct a dlib rectangle object from the bounding
                     # box coordinates and then start the dlib correlation
                     # tracker
@@ -361,14 +318,9 @@ class Stream:
 
                     drawBoundingBox(frame, box, centroid, color=(0, 0, 255))
 
-                    # cv2.putText(
-                    #    frame, status, (0, 115), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA
-                    # )
-
     # object tracking using dlib and centroid tracker
     def track(self, frame, trackers, rects):
         for tracker in trackers:
-            status = "Tracking"
             # update the tracker and grab the position of the tracked
             # object
             tracker.update(frame)
@@ -388,8 +340,6 @@ class Stream:
             centroid = computeCentroid(box)
 
             drawBoundingBox(frame, box, centroid, color=(0, 128, 255))
-
-            # cv2.putText(frame, status, (0, 95), font, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
 
     # people counting logic based on zone of appearance
     def counting(self, frame, objects, trackableObjects):  # , totalIn, totalOut):
@@ -454,11 +404,6 @@ class Stream:
 
         elapsedFrames = 0
 
-        # start the frames per second throughput estimator
-        # self.fps = FPS().start()
-        # totalFPS = FPS().start()
-
-        # loop over frames from the video file stream
         while True:
             # read the next frame from the file
             if self.camera is not None:
@@ -466,12 +411,10 @@ class Stream:
                 start = time.time()
                 self.totalPersonsInside = self.totalIn - self.totalOut
 
-                # frame = imutils.resize(frame, width=300)q
-
-                # if the frame was not grabbed, then we have reached the end
-                # of the stream
+                # für Endlosschleife des Videos, kann sobald eine VideoCam angeschlossen ist entfernt werden
                 if not grabbed:
                     self.camera = cv2.VideoCapture(inputFile)
+                    elapsedFrames = 0
 
                     continue
 
@@ -480,22 +423,21 @@ class Stream:
 
                 # object detection only every n frames to improve performances
                 # strat dlib correlation tracker on detections
-                if elapsedFrames % skipFrames == 0:
+                if elapsedFrames % self.skipFrames == 0:
                     trackers = []
-                    status = "Detecting"
+                    start = time.time()
 
                     # Create the blob with a size of (300, 300)
                     blob = cv2.dnn.blobFromImage(
-                        frame, size=(inputWidth, inputHeight), swapRB=True, crop=False
+                        frame, size=(self.inputWidth, self.inputHeight), swapRB=True, crop=False
                     )
 
                     # Feed the input blob to the network, perform inference and get the output:
                     # Set the input for the network
                     self.net.setInput(blob)
 
-
                     detections = self.net.forward()
-
+                    self.fps = 1.0 / (time.time() - start)
 
                     self.detect(frame, detections, trackers, rects)
 
@@ -532,16 +474,12 @@ class Stream:
                 # increment the total number of frames processed thus far and
                 # then update the FPS counter
                 elapsedFrames += 1
-                # self.fps.update()
-
-                # show the video beeing processed live
-                # cv2.imshow("RPI", frame)
 
                 (flag, encodedImage) = cv2.imencode(".jpg", frame)
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
 
             else:
-                # Centroid Tracker aus dem Arbeitsspeicher entfernen um Rechenleistung zu sparen
+                # Centroid Tracker aus dem Speicher entfernen um Rechenleistung zu sparen
                 if self.ct is not None:
                     self.ct = None
                 if self.net is not None:

@@ -86,7 +86,7 @@ class Stream:
         self.withMask = 0
         self.withoutMask = 0
 
-        # jeweils 1 damit das pie chart funktioniert und wir nicht durch 0 teilen
+
         self.maskFrames = 0
         self.noMaskFrames = 0
 

@@ -392,17 +392,18 @@ $('#exampleModal').on('show.bs.modal', function (event) {
 </script>
 
 <script>
-        var chartTemperature;
+        var chartPersonCounter;
         function requestData()
         {
             // Ajax call to get the Data from Flask
-            var requests = $.get('/data');
+            var requests = $.get('/person_counter_data');
 
             var tm = requests.done(function (result)
             {
-                // Temperature
-                var seriesTemperature = chartTemperature.series[0],
-                    shiftTemperature = seriesTemperature.data.length > 50;
+
+                var seriesPersonCounter = chartPersonCounter.series[0],
+                    shift = seriesPersonCounter.data.length > 30;
+                // sobald mehr als 30 Punkte auf dem Graphen vorhanden sind verschiebt dieser sich nach links
 
 
 
@@ -415,12 +416,12 @@ $('#exampleModal').on('show.bs.modal', function (event) {
 
 
 
-                chartTemperature.series[0].addPoint(data1, true, shiftTemperature);
+                chartPersonCounter.series[0].addPoint(data1, true, shift);
 
 
 
                 // call it again after one second
-                setTimeout(requestData, 15000);
+                setTimeout(requestData, 5000);
 
             });
         }
@@ -428,7 +429,7 @@ $('#exampleModal').on('show.bs.modal', function (event) {
         $(document).ready(function()
         {
             // --------------Chart 1 ----------------------------
-            chartTemperature = new Highcharts.Chart({
+            chartPersonCounter = new Highcharts.Chart({
                 chart:
                     {
                     renderTo: 'data-person-counter',

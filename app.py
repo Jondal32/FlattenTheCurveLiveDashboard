@@ -37,7 +37,6 @@ lock = threading.Lock()
 
 app.register_blueprint(plots)
 app.register_blueprint(piePlots)
-app.register_blueprint(backgroundTasks)
 
 prototxtPath = 'models/face_detector/deploy.prototxt'
 weightsPath = 'models/face_detector/res10_300x300_ssd_iter_140000.caffemodel'
@@ -56,7 +55,9 @@ from core.distance_detection import Stream as distance_detection_stream
 # from core.jetson.distance_detection_jetson import Stream as distance_detection_stream
 
 
-# Check if user logged in
+# region Login und Nutzer Verwaltung
+
+# Überprüfung ob der Nutzer eingeloggt ist
 def is_logged_in(f):
     @wraps(f)
     def wrap(*args, **kwargs):
@@ -70,6 +71,7 @@ def is_logged_in(f):
     return wrap
 
 
+# Überprüfung der Nutzerrechte und entsprechend Zugang freigeben oder verwehren
 def check_rights(f):
     @wraps(f)
     def wrap(*args, **kwargs):
@@ -92,11 +94,95 @@ def check_rights(f):
     return wrap
 
 
+# Registierungsformular
+class RegisterForm(Form):
+    name = StringField('Name', [validators.Length(min=1, max=50)])
+    username = StringField('Benutzername', [validators.Length(min=4, max=25)])
+    email = StringField('Email Adresse', [validators.Length(min=6, max=50)])
+    password = PasswordField('Passwort', [
+        validators.DataRequired(),
+        validators.EqualTo('confirm', message='Die angegebenen Passwörter stimmen nicht überein')
+    ])
+    confirm = PasswordField('Passwort bestätigen')
+
+
+# User  Registierung
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm(request.form)
+    if request.method == 'POST' and form.validate():
+        name = form.name.data
+        email = form.email.data
+        username = form.username.data
+        password = sha256_crypt.encrypt(str(form.password.data))
+
+        cur = mysql.connection.cursor()
+
+        cur.execute("INSERT INTO users(name, email, username, password) VALUES(%s, %s, %s, %s)",
+                    (name, email, username, password))
+
+        mysql.connection.commit()
+
+        cur.close()
+
+        flash('Sie haben sich erfolgreich registriert', 'success')
+
+        return redirect(url_for('login'))
+    return render_template('register.html', form=form)
+
+
+# User login
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # Daten von Formular erhalten
+        username = request.form['username']
+        password_candidate = request.form['password']
+
+        cur = mysql.connection.cursor()
+
+        # Nutzer anhand der Nutzernamen finden
+        result = cur.execute("SELECT * FROM users WHERE username = %s", [username])
+
+        if result > 0:
+            # Get stored hash
+            data = cur.fetchone()
+            password = data['password']
+
+            # Passwörter vergleichen
+            if sha256_crypt.verify(password_candidate, password):
+                session['logged_in'] = True
+                session['username'] = username
+
+                flash('Erfolgreich eingeloggt', 'success')
+                return redirect(url_for('index'))
+            else:
+                error = 'Benutzername oder Passwort falsch'
+                return render_template('login.html', error=error)
+            cur.close()
+        else:
+            error = 'Benutzername nicht gefunden'
+            return render_template('login.html', error=error)
+
+    return render_template('login.html')
+
+
+# Logout
+@app.route('/logout')
+@is_logged_in
+def logout():
+    session.clear()
+    flash('Erfolgreich abgemeldet', 'success')
+    return redirect(url_for('login'))
+
+
+# endregion
+
+# region Dashboard Seiten
 # Home Seite
 @app.route('/')
 def index():
     return render_template('home.html')
-
 
 
 @app.route('/maskdetection')
@@ -183,11 +269,6 @@ def distance_messurement():
     return render_template('distance_messurement.html', setting=setting)
 
 
-@app.route('/kontakt')
-def kontakt():
-    return render_template('kontakt.html')
-
-
 @app.route('/analytics', methods=['GET', 'POST'])
 @is_logged_in
 @check_rights
@@ -204,100 +285,18 @@ def analytics():
                            visitorSettings=visitorSettings)
 
 
-# Register Form Class
-class RegisterForm(Form):
-    name = StringField('Name', [validators.Length(min=1, max=50)])
-    username = StringField('Benutzername', [validators.Length(min=4, max=25)])
-    email = StringField('Email Adresse', [validators.Length(min=6, max=50)])
-    password = PasswordField('Passwort', [
-        validators.DataRequired(),
-        validators.EqualTo('confirm', message='Die angegebenen Passwörter stimmen nicht überein')
-    ])
-    confirm = PasswordField('Passwort bestätigen')
-
-
-# User Register
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegisterForm(request.form)
-    if request.method == 'POST' and form.validate():
-        name = form.name.data
-        email = form.email.data
-        username = form.username.data
-        password = sha256_crypt.encrypt(str(form.password.data))
-
-        # Create cursor
-        cur = mysql.connection.cursor()
-
-        # Execute query
-        cur.execute("INSERT INTO users(name, email, username, password) VALUES(%s, %s, %s, %s)",
-                    (name, email, username, password))
-
-        # Commit to DB
-        mysql.connection.commit()
-
-        # Close connection
-        cur.close()
-
-        flash('Sie haben sich erfolgreich registriert', 'success')
-
-        return redirect(url_for('login'))
-    return render_template('register.html', form=form)
-
-
-# User login
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        # Get Form Fields
-        username = request.form['username']
-        password_candidate = request.form['password']
-
-        # Create cursor
-        cur = mysql.connection.cursor()
-
-        # Get user by username
-        result = cur.execute("SELECT * FROM users WHERE username = %s", [username])
-
-        if result > 0:
-            # Get stored hash
-            data = cur.fetchone()
-            password = data['password']
-
-            # Compare Passwords
-            if sha256_crypt.verify(password_candidate, password):
-                # Passed
-                session['logged_in'] = True
-                session['username'] = username
-
-                flash('Erfolgreich eingeloggt', 'success')
-                return redirect(url_for('index'))
-            else:
-                error = 'Benutzername oder Passwort falsch'
-                return render_template('login.html', error=error)
-            # Close connection
-            cur.close()
-        else:
-            error = 'Benutzername nicht gefunden'
-            return render_template('login.html', error=error)
-
-    return render_template('login.html')
-
-
-# Logout
-@app.route('/logout')
-@is_logged_in
-def logout():
-    session.clear()
-    flash('Erfolgreich abgemeldet', 'success')
-    return redirect(url_for('login'))
-
-
 @app.route('/datenschutz')
 def datenschutz():
     return render_template('datenschutz.html')
 
 
+@app.route('/kontakt')
+def kontakt():
+    return render_template('kontakt.html')
+
+# endregion
+
+# region VideoStreams
 @app.route('/mask_detection_video', methods=['GET', 'POST'])
 def mask_detection_video():
     return Response(MaskStream.generateFrames(faceNet=faceNet, maskNet=maskNet),
@@ -315,14 +314,14 @@ def distance_detection_video():
     return Response(DistanceDetectionStream.generateFrames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
+# endregion
 
-## Daten für das Linien Diagram von PersonCounter
-@app.route('/data', methods=["GET", "POST"])
-def data():
+## Daten für das Linien Diagram von PersonCounter + Überführung in die Datenbank
+@app.route('/person_counter_data', methods=["GET", "POST"])
+def person_counter_data():
     current_in = PersonCounterStream.totalIn
     current_out = PersonCounterStream.totalOut
 
-    # %Y-%m-%d , time2.strftime('%H:%M:%S')
 
     data = [time() * 1000, current_in, current_out]
 
@@ -399,11 +398,14 @@ def backgroundPersonCounter():
 
 
 if __name__ == '__main__':
+    person_counter_video = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\1.mp4"
+    distance_detection_video = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\pedestrians.mp4"
+
     MaskStream = mask_stream(camera_src=0)
     PersonCounterStream = person_counter_stream(
-        camera_src=r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\1.mp4")
+        camera_src=person_counter_video)
     DistanceDetectionStream = distance_detection_stream(
-        camera_src=r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\pedestrians.mp4")
+        camera_src=distance_detection_video)
 
     PieChartData = PieChartData()
     app.secret_key = 'secret123'

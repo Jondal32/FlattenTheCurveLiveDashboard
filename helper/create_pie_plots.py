@@ -9,6 +9,7 @@ from app import mysql
 
 
 class PieChartData:
+    """Diese Klasse erstellt alle PiePlots die für Analytics relevant sind"""
 
     def __init__(self):
         self.dataToday = None

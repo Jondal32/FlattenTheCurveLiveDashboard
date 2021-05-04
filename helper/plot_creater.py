@@ -1,11 +1,7 @@
 from flask import Response, Blueprint, send_file, make_response
 
 from matplotlib.figure import Figure
-import random as rand
-import datetime
-import numpy as np
-from datetime import datetime as dt
-from datetime import timedelta
+
 import pandas as pd
 
 import matplotlib.pyplot as plt
@@ -52,9 +48,7 @@ def createDistanceMessurementHeatmap():
 
     ax.imshow(img)
 
-    # plt.ylim(0,ymin)
-    # plt.xlim(0,xmax)
-    # ax.invert_yaxis()
+
     ax.set_axis_off()
     file_path = "static/img/imgHeatMapFINAL.png"
     fig.savefig(file_path, bbox_inches='tight', pad_inches=0)

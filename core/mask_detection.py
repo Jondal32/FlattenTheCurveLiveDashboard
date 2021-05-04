@@ -76,15 +76,14 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
 class Stream:
 
     def __init__(self, camera_src):
-        self.camera_src = 0
+        self.camera_src = camera_src
         self.camera = None
-        self.prev_messages = ""
         self.fps = 0
         self.amount_detected = 0
         self.withMask = 0
         self.withoutMask = 0
 
-        # jeweils 1 damit das pie chart funktioniert und wir nicht durch 0 teilen
+
         self.maskFrames = 0
         self.noMaskFrames = 0
 
@@ -111,11 +110,11 @@ class Stream:
             if self.camera is not None:
                 ret, frame = self.camera.read()
                 start = time.time()
-                #start_ms = time.time() * 1000
+
                 if not ret:
                     break
 
-                # frame = imutils.resize(frame, width=600)
+
 
                 # detect faces in the frame and determine if they are wearing a
                 # face mask or not
@@ -156,12 +155,12 @@ class Stream:
                     cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
 
                 self.fps = 1.0 / (time.time() - start)
-                #print(start_ms - time.time() * 1000)
+
 
                 (flag, encodedImage) = cv2.imencode(".jpg", frame)
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
 
-
+# PieChart in die Datenbank übernehmen
 def savePieChartData(maskFrames, noMaskFrames):
     try:
 
