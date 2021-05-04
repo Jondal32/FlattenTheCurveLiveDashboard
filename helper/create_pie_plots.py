@@ -28,7 +28,6 @@ class PieChartData:
             if result > 0:
                 try:
                     re = cur.fetchall()
-
                     data = [int(re[0]["maskFrames"]), int(re[0]["noMaskFrames"])]
 
                     cur.close()
