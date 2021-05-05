@@ -79,19 +79,19 @@ class Stream:
 
     def __init__(self, camera_src):
         self.camera_src = camera_src
-        self.camera = None
+        self.camera = cv2.VideoCapture(self.camera_src)
         self.prev_messages = ""
         self.fps = 0
         self.amount_detected = 0
         self.withMask = 0
         self.withoutMask = 0
 
-
         self.maskFrames = 0
         self.noMaskFrames = 0
 
         self.stream_on = False
         self.net = jetson.inference.detectNet("ssd-mobilenet-v2", threshold=0.5)
+
 
         self.timeStamp = time.time()
         self.font = cv2.FONT_HERSHEY_COMPLEX
@@ -127,6 +127,7 @@ class Stream:
                 frame = jetson.utils.cudaFromNumpy(img)
 
                 detections = self.net.Detect(frame, width, height, overlay='none')
+
                 for detect in detections:
                     # print(detect)
                     ID = detect.ClassID

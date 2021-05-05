@@ -3,6 +3,7 @@ from scipy.spatial import distance as dist
 import numpy as np
 import cv2
 import time
+import csv
 import jetson.inference
 import jetson.utils
 
@@ -24,10 +25,13 @@ class Stream:
         self.violations = 0
         self.amount_detected = 0
 
+        self.violations_list = MaxSizeList(40)
+
     def close(self):
         if self.camera is not None:
             self.camera.release()
             self.camera = None
+            self.violations_list.list_to_csv()
 
     def open(self):
         self.camera = cv2.VideoCapture(self.camera_src)
@@ -86,6 +90,8 @@ class Stream:
                 # update the color
                 if i in violate:
                     color = (0, 0, 255)
+                    # alle Verstöße zur Liste hinzufügen die zur Erstellung der HeatMap geeignet ist
+                    self.violations_list.push([int(startX), int(startY)])
 
                 # draw (1) a bounding box around the person and (2) the
                 # centroid coordinates of the person,
@@ -161,3 +167,24 @@ class Stream:
 
         # return the list of results
         return results
+
+
+class MaxSizeList(object):
+
+    def __init__(self, max_length):
+        self.max_length = max_length
+        self.ls = []
+
+    def push(self, st):
+        if len(self.ls) == self.max_length:
+            self.ls.pop(0)
+        self.ls.append(st)
+
+    def get_list(self):
+        return self.ls
+
+    def list_to_csv(self):
+        with open('static/img/output.csv', 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(['x', 'y'])
+            writer.writerows(self.ls)

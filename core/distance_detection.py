@@ -3,6 +3,7 @@ from scipy.spatial import distance as dist
 import numpy as np
 import cv2
 import time
+import csv
 
 
 class Stream:
@@ -16,6 +17,7 @@ class Stream:
         self.net = cv2.dnn.readNetFromTensorflow(self.pbFile, self.pbtxtFile)
         self.MIN_CONF = 0.5
         self.NMS_THRESH = 0.3
+        self.violations_list = MaxSizeList(50)
 
         self.H = None
         self.W = None
@@ -35,13 +37,16 @@ class Stream:
             self.camera.release()
             self.camera = None
             self.net = None
+            self.violations_list.list_to_csv()
 
     def open(self):
         self.camera = cv2.VideoCapture(self.camera_src)
         self.net = cv2.dnn.readNetFromTensorflow(self.pbFile, self.pbtxtFile)
 
         self.H = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
         self.W = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+        print(self.H, self.W)
 
     def status(self):
         return self.camera is not None
@@ -99,6 +104,7 @@ class Stream:
                     # update the color
                     if i in violate:
                         color = (0, 0, 255)
+                        self.violations_list.push([int(cX), int(cY)])
 
                     # draw (1) a bounding box around the person and (2) the
                     # centroid coordinates of the person,
@@ -179,3 +185,23 @@ class Stream:
 
         # return the list of results
         return results
+
+class MaxSizeList(object):
+
+    def __init__(self, max_length):
+        self.max_length = max_length
+        self.ls = []
+
+    def push(self, st):
+        if len(self.ls) == self.max_length:
+            self.ls.pop(0)
+        self.ls.append(st)
+
+    def get_list(self):
+        return self.ls
+
+    def list_to_csv(self):
+        with open('static/img/output.csv', 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['x', 'y'])
+            writer.writerows(self.ls)

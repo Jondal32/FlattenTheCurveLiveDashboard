@@ -221,6 +221,7 @@ class Stream:
         self.totalPersonsInside = 0
         self.minConfidence = 0.5
         self.skipFrames = 5
+        self.draw_info_on_frame = False
 
         self.net = cv2.dnn.readNetFromTensorflow(pbFile, pbtxtFile)
 
@@ -453,23 +454,26 @@ class Stream:
                 cv2.line(frame, (0, self.limitIn), (self.W, self.limitIn), (0, 255, 255), 1)
                 cv2.line(frame, (0, self.limitOut), (self.W, self.limitOut), (255, 255, 0), 1)
 
-                # construct a tuple of information we will be displaying on the
-                # frame
-                info = [("Raus", self.totalOut), ("Rein", self.totalIn), ("im Markt", self.totalIn - self.totalOut)]
+                if self.draw_info_on_frame:
+                    # construct a tuple of information we will be displaying on the
+                    # frame
+                    info = [("Raus", self.totalOut), ("Rein", self.totalIn), ("im Markt", self.totalIn - self.totalOut)]
 
-                # loop over the info tuples and draw them on our frame
-                for (i, (k, v)) in enumerate(info):
-                    text = "{}: {}".format(k, v)
-                    cv2.putText(
-                        frame,
-                        text,
-                        (10, self.H - ((i * 20) + 20)),
-                        font,
-                        0.6,
-                        (0, 255, 255),
-                        1,
-                        cv2.LINE_AA,
-                    )
+                    # loop over the info tuples and draw them on our frame
+                    for (i, (k, v)) in enumerate(info):
+                        text = "{}: {}".format(k, v)
+                        cv2.putText(
+                            frame,
+                            text,
+                            (10, self.H - ((i * 20) + 20)),
+                            font,
+                            0.6,
+                            (0, 255, 255),
+                            1,
+                            cv2.LINE_AA,
+                        )
+
+
 
                 # increment the total number of frames processed thus far and
                 # then update the FPS counter

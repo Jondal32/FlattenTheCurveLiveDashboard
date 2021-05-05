@@ -49,9 +49,8 @@ Daher ist für jede Aufgabe des Dashboard ein MobileNet-v2 verwendet worden.
 
 Modell  | i7-6500U CPU 2.50GHz | Jetson Nano |
 --------| :--------: | :-------: |
-Maskenerkennung | 6-8 FPS | 16-18 FPS |
+Maskenerkennung | 6-8 FPS | 5-6 FPS |
 Personen Zähler (dlib Centroid Tracker) | 16-18 FPS | 2-3 FPS |
-Personen Zähler (deepSort) | - | -
 Abstandskontrolle | 6-7 FPS | 16-18 FPS |
 
 
@@ -64,7 +63,7 @@ Abstandskontrolle | 6-7 FPS | 16-18 FPS |
 * Je weiter man sich von der Kamera entfernt, desto unsicherer wird die Vorhersage beziehungsweise schwerer ist es generell ein Gesicht zu erkennen.
 * Personen mit Maske können trotz Tracking nur schwer zugeordnet werden, wodurch eine genau Anzahl von Personen mit und ohne Maske fast unmöglich ist. Daher zunächst nur eine Verteilung des Verhältnis zwischen Personen mit und ohne Maske über die verarbeitenen FPS hinweg.
 * Genauigkeit mit SSD-MobileNet V2 300x300 ausbaufähig, jedoch bisher der schnellste getestete Ansatz (als TensorRT Modell auf dem Jetson ebenfalls am schnellsten)
-
+* Sobald sich Leute zu schnell bewegen wird keine Maske mehr erkannt
 
 #### Personen Zähler
 * Vogelperspektive mit leicht schrägen Winkel erlaubt beste Vorhersage beziehungsweise Genauigkeit der Erkennung von Personen

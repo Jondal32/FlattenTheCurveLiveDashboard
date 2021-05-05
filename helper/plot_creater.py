@@ -24,7 +24,7 @@ def plot_heatmap():
 
 def createDistanceMessurementHeatmap():
     img = plt.imread("static/img/imgHeatMapRAW.JPG")
-    df = pd.read_csv("static/img/testdata.csv")
+    df = pd.read_csv("static/img/output.csv")
 
     fig = Figure(dpi=300)
 
