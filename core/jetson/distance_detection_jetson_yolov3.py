@@ -35,6 +35,7 @@ class Stream:
         self.fps = 0
         self.violations = 0
         self.amount_detected = 0
+        self.index = 0
 
         self.violations_list = MaxSizeList(50)
 
@@ -56,6 +57,9 @@ class Stream:
     def generateFrames(self):
         while True:
             (grabbed, frame) = self.camera.read()
+            self.index += 1
+            if self.index % 60 != 0:
+                continue
             start = time.time()
 
             # if the frame was not grabbed, then we have reached the end
@@ -122,62 +126,7 @@ class Stream:
             (flag, encodedImage) = cv2.imencode(".jpg", frame)
             yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')
 
-    def detect_people2(self, frame):
-        # grab the dimensions of the frame and  initialize the list of
-        # results
-        height = frame.shape[0]
-        width = frame.shape[1]
-        results = []
 
-        cuda_frame = jetson.utils.cudaFromNumpy(frame)
-        detections = self.net.Detect(cuda_frame, width, height, overlay='none')
-
-        # initialize our lists of detected bounding boxes, centroids, and
-        # confidences, respectively
-        boxes = []
-        centroids = []
-        confidences = []
-
-        for detection in detections:
-            confidence = float(detection.Confidence)
-
-            # if the confidence is above a threshold
-            if confidence > self.MIN_CONF:
-                classID = detection.ClassID
-
-                # proceed only if the object detected is indeed a human
-                if classID == 1:
-                    # get coordinates of the bbox
-                    left = detection.Left
-                    top = detection.Top
-                    right = detection.Right
-                    bottom = detection.Bottom
-                    width = detection.Width
-                    height = detection.Height
-
-                    boxes.append([left, top, width, height])
-                    centroids.append((detection.Center[0], detection.Center[1]))
-                    confidences.append(confidence)
-
-        # NMS on bounding boxes
-        idxs = cv2.dnn.NMSBoxes(boxes, confidences, self.MIN_CONF, self.NMS_THRESH)
-
-        # ensure at least one detection exists
-        if len(idxs) > 0:
-            # loop over the indexes we are keeping
-            for i in idxs.flatten():
-                # extract the bounding box coordinates
-                (x, y) = (boxes[i][0], boxes[i][1])
-                (w, h) = (boxes[i][2], boxes[i][3])
-
-                # update our results list to consist of the person
-                # prediction probability, bounding box coordinates,
-                # and the centroid
-                r = (confidences[i], (x, y, x + w, y + h), centroids[i])
-                results.append(r)
-
-        # return the list of results
-        return results
 
     def detect_people(self, frame):
         (H, W) = frame.shape[:2]

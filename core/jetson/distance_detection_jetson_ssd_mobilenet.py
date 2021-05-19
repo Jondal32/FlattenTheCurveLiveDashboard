@@ -25,7 +25,7 @@ class Stream:
         self.violations = 0
         self.amount_detected = 0
 
-        self.violations_list = MaxSizeList(40)
+        self.violations_list = MaxSizeList(50)
 
     def close(self):
         if self.camera is not None:
