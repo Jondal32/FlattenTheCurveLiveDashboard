@@ -32,6 +32,7 @@ class Stream:
         self.ln = [self.ln[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
 
         # info for cards
+        #
         self.fps = 0
         self.violations = 0
         self.amount_detected = 0
