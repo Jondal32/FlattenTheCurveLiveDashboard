@@ -186,7 +186,11 @@ class Stream:
         # return the list of results
         return results
 
+
 class MaxSizeList(object):
+    """
+    Anstatt Daten in die Datenabank zu übertragen wird hier eine lokale Liste gespeichert und stetig aktualisiert mit den letzten X-Abstandsunterschreitungen
+    """
 
     def __init__(self, max_length):
         self.max_length = max_length

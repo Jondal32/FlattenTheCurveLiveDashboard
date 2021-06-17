@@ -408,6 +408,7 @@ class Stream:
         while True:
             # read the next frame from the file
             if self.camera is not None:
+
                 (grabbed, frame) = self.camera.read()
                 start = time.time()
                 self.totalPersonsInside = self.totalIn - self.totalOut
@@ -444,7 +445,11 @@ class Stream:
 
                 # do tracking using detection data on every other frame
                 else:
+
                     self.track(frame, trackers, rects)
+
+
+
 
                 objects = self.ct.update(rects)
                 self.counting(frame, objects, trackableObjects)  # , totalIn, totalOut)
@@ -475,9 +480,10 @@ class Stream:
 
 
 
-                # increment the total number of frames processed thus far and
-                # then update the FPS counter
+
                 elapsedFrames += 1
+
+
 
                 (flag, encodedImage) = cv2.imencode(".jpg", frame)
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encodedImage) + b'\r\n')

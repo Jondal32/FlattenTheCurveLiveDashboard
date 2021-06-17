@@ -38,22 +38,30 @@ lock = threading.Lock()
 app.register_blueprint(plots)
 app.register_blueprint(piePlots)
 
-prototxtPath = 'models/face_detector/deploy.prototxt'
-weightsPath = 'models/face_detector/res10_300x300_ssd_iter_140000.caffemodel'
-faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
-maskNet = load_model('models/face_detection_mobilenetv2')
+mobileNet_active = False
+
+if mobileNet_active:
+    from core.mask_detection import Stream as mask_stream
+    prototxtPath = 'models/face_detector/deploy.prototxt'
+    weightsPath = 'models/face_detector/res10_300x300_ssd_iter_140000.caffemodel'
+    faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
+    maskNet = load_model('models/face_detection_mobilenetv2')
+
+else:
+    from core.mask_detection_ssd import Stream as mask_stream
 
 
-from core.mask_detection import Stream as mask_stream
+
 from core.person_counter import Stream as person_counter_stream
 from core.distance_detection import Stream as distance_detection_stream
 
 """wenn die Jetson spezifischen Files genutzt werden sollen dann die vorherigen 3 Import Statements auskommentieren und diese verwenden"""
 
 
-# from core.jetson.mask_detection_jetson import Stream as mask_stream
+# from core.jetson.mask_detection_jetson_ssd import Stream as mask_stream
 # from core.jetson.person_counter_jetson import Stream as person_counter_stream
 # from core.jetson.distance_detection_jetson import Stream as distance_detection_stream
+
 
 
 # region Login und Nutzer Verwaltung
@@ -300,8 +308,16 @@ def kontakt():
 # region VideoStreams
 @app.route('/mask_detection_video', methods=['GET', 'POST'])
 def mask_detection_video():
-    return Response(MaskStream.generateFrames(faceNet=faceNet, maskNet=maskNet),
+    if mobileNet_active:
+        return Response(MaskStream.generateFrames(faceNet=faceNet, maskNet=maskNet),
+                        mimetype='multipart/x-mixed-replace; boundary=frame')
+
+    return Response(MaskStream.generateFrames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+
+
 
 
 @app.route('/person_counter_video', methods=['GET', 'POST'])
@@ -401,6 +417,8 @@ def backgroundPersonCounter():
 if __name__ == '__main__':
     person_counter_video = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\1.mp4"
     distance_detection_video = r"C:\Users\manue\PycharmProjects\einfaches_dashboard_feb_2021\videos\pedestrians.mp4"
+
+
 
     MaskStream = mask_stream(camera_src=0)
     PersonCounterStream = person_counter_stream(

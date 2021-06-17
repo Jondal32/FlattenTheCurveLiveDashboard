@@ -58,6 +58,7 @@ class Stream:
     def generateFrames(self):
         while True:
             (grabbed, frame) = self.camera.read()
+            # Zur Verdeutlichung wie es mit einem Stream aussehen würde wo jeweils der aktuelle Frame verarbeitet wird
             self.index += 1
             if self.index % 60 != 0:
                 continue

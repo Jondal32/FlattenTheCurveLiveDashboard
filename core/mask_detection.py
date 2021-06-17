@@ -12,18 +12,16 @@ from app import mysql
 
 
 def detect_and_predict_mask(frame, faceNet, maskNet):
-    # grab the dimensions of the frame and then construct a blob
-    # from it
+
     (h, w) = frame.shape[:2]
     blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300),
                                  (104.0, 177.0, 123.0))
 
-    # pass the blob through the network and obtain the face detections
+
     faceNet.setInput(blob)
+
     detections = faceNet.forward()
 
-    # initialize our list of faces, their corresponding locations,
-    # and the list of predictions from our face mask network
     faces = []
     locs = []
     preds = []
@@ -66,10 +64,10 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
         # faces at the same time rather than one-by-one predictions
         # in the above `for` loop
         faces = np.array(faces, dtype="float32")
+
         preds = maskNet.predict(faces, batch_size=32)
 
-    # return a 2-tuple of the face locations and their corresponding
-    # locations
+
     return locs, preds
 
 
@@ -155,6 +153,8 @@ class Stream:
                     cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
 
                 self.fps = 1.0 / (time.time() - start)
+
+
 
 
                 (flag, encodedImage) = cv2.imencode(".jpg", frame)
