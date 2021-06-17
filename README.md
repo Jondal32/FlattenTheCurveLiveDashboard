@@ -24,7 +24,7 @@ Für die Installation befinden sich alle relevanten Anforderungen unter [require
 Des weiteren wird eine MySQL Datenbank benötigt, welche innerhalb von app.py eingebunden werden muss. Dafür ist die Struktur aus [flask_dashboard.sql](https://github.com/Jondal32/einfaches_dashboard_feb_2021_2/blob/master/static/database/flask_dashboard.sql) zu übernehmen.
 Die Datenbank verfügt über ein User und Rollensystem, wodurch bei einer neuen Registrierung der Datenbank Administrator zunächst die entsprechende Rolle in Form von einem Bit-Feld innerhalb der User-Tabelle verändern muss. Der Benutzer wird für die entsprechenden Bereiche innerhalb des Dashboard mit dem Bit-Wert von 1 freigeschaltet.
 (Der Benutzer "Jondal" mit Passwort "123" ist bereits in der Datenbank hinterlegt und kann alle Funktion ausführen).
-Vor der Anwendung muss außerdem ein [models](https://drive.google.com/drive/folders/1bvcnWpXHDkKYeLWoLm6CNbMQfvspHzQi?usp=sharing) Ordner in das Repository eingefügt werden. Darin befinden sich bereits trainierte Machine-Learning Modelle für sowohl Maskenerkennung als auch Personen Zähler und die Abstandskontrolle.
+Vor der Anwendung muss außerdem ein [models](https://drive.google.com/drive/folders/1lHyHxU6i5PMoDlVmQabyuinn9SAqc6SM?usp=sharing) Ordner in das Repository eingefügt werden. Darin befinden sich bereits trainierte Machine-Learning Modelle für sowohl Maskenerkennung als auch Personen Zähler und die Abstandskontrolle.
 
 #### Jetson Nano
 Bei einer Anwendung über den Jetson Nano muss zusätzlich noch Jetson-Inference installiert werden und die Pfade in app.py entsprechend angepasst, sodass aus core anstatt der regulären Python Skripte die für den Jetson abgestimmten übernommen werden.
