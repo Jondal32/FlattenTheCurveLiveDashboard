@@ -50,6 +50,7 @@ python app.py
 * Sobald sich Leute zu schnell bewegen wird keine Maske mehr erkannt
 
 #### Personen Zähler
+
 * Vogelperspektive mit leicht schrägen Winkel erlaubt beste Vorhersage beziehungsweise Genauigkeit der Erkennung von Personen
 * das auf dem COCO Datensatz trainierte SSD-MobileNet bei der Erkennung der Personen oft ungenau beziehungsweise erkennt diese zu spät oder garnicht
 * Tracking mit Dlib auf dem Jetson Nano sehr langsam und das Bottle Neck (Detection kann auf Flask flüssig mit etwa 15-18 FPS laufen; das gesamte Skripte jedoch nur mit 5-6 FPS, da das Tracking über die CPU berechnet wird)
